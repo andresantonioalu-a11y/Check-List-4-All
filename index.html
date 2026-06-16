@@ -34,7 +34,6 @@
         
         .connection-status { font-size: 12px; padding: 4px 10px; border-radius: 12px; display: flex; align-items: center; gap: 6px; }
         .connection-status.online { background-color: rgba(22, 163, 74, 0.2); color: #4ade80; }
-        .connection-status.offline { background-color: rgba(220, 38, 38, 0.2); color: #fca5a5; }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; background-color: currentColor; }
 
         .role-nav { display: flex; background-color: var(--primary-light); padding: 0 10px; }
@@ -49,6 +48,7 @@
         .card-title { font-size: 16px; font-weight: 600; color: var(--primary); margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
         
         .form-group { margin-bottom: 15px; }
+        .form-group.row-layout { display: flex; gap: 10px; align-items: flex-end; }
         label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; }
 
@@ -56,6 +56,7 @@
         .btn:hover { background-color: var(--accent-hover); }
         .btn-success { background-color: var(--success); }
         .btn-secondary { background-color: #64748b; }
+        .btn-warning { background-color: var(--warning); }
         .btn-danger { background-color: var(--danger); }
         .btn-block { width: 100%; }
 
@@ -66,24 +67,29 @@
         .simplified-camera-zone { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border); display: flex; flex-direction: column; gap: 12px; }
         .camera-controls-row { display: flex; align-items: center; justify-content: space-between; width: 100%; }
         .camera-status-indicator { font-size: 12px; font-weight: 600; color: var(--text-muted); }
-        .camera-status-indicator .photo-filename-label { font-size: 11px; color: var(--accent); font-family: monospace; }
+        .camera-status-indicator .photo-filename-label { font-size: 11px; color: var(--success); font-family: monospace; }
         .photo-preview-container { display: none; width: 100%; max-width: 450px; margin-top: 8px; border: 2px solid var(--accent); border-radius: 6px; overflow: hidden; }
         .photo-preview-container img { width: 100%; height: auto; display: block; }
 
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
         .toast { background-color: var(--primary); color: white; padding: 12px 20px; border-radius: 6px; margin-top: 10px; font-size: 13px; display: flex; gap: 15px; align-items: center; }
         
+        /* CAMERA SCREEN MODAL */
         #hardware-viewfinder-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #000; z-index: 3000; flex-direction: column; justify-content: space-between; align-items: center; padding: 20px 10px; }
-        .viewfinder-header { color: white; text-align: center; width: 100%; }
-        .viewfinder-filename-preview { background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-family: monospace; color: #38bdf8; margin-top: 6px; display: inline-block; }
-        .viewfinder-container { width: 100%; max-width: 480px; height: 55vh; border-radius: 12px; overflow: hidden; border: 2px solid #334155; position: relative; }
+        .viewfinder-header { color: white; text-align: center; width: 100%; padding: 5px 0; }
+        .viewfinder-checkpoint-title { font-size: 16px; font-weight: 600; color: #38bdf8; text-transform: uppercase; margin-bottom: 4px; }
+        
+        .viewfinder-container { width: 100%; max-width: 480px; height: 60vh; border-radius: 12px; overflow: hidden; border: 2px solid #334155; position: relative; background-color: #111; }
         #active-lens-video { width: 100%; height: 100%; object-fit: cover; }
         
-        .viewfinder-controls { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 10px; width: 100%; padding: 0 10px; }
-        .action-row-main { display: flex; justify-content: space-between; gap: 12px; width: 100%; }
+        .viewfinder-controls { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 10px; }
+        .photo-action-cluster { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
 
         .items-list { max-height: 450px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
         .list-item { padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: white; }
+        
+        /* FLOATING OR ISOLATED PANEL FOR DEFINITIVE END OF UNIT AUDIT */
+        .master-completion-zone { margin-top: 25px; padding: 20px; border-top: 2px dashed var(--border); text-align: center; }
     </style>
 </head>
 <body>
@@ -107,11 +113,11 @@
     <div id="inspector-view" class="view-panel active">
         <div class="grid-2">
             <div class="card">
-                <div class="card-title">Unit Profile</div>
+                <div class="card-title">Unit Profile Header</div>
                 
                 <div class="form-group">
                     <label for="ins-inspector">Starting Inspector</label>
-                    <select id="ins-inspector" onchange="autoSaveActiveFormState()">
+                    <select id="ins-inspector" onchange="backupCurrentStateToLocalStorage()">
                         <option value="">-- Select Inspector --</option>
                         <option value="Alex Vazquez">Alex Vazquez (Leak Check)</option>
                         <option value="Andreina Yanez">Andreina Yanez (Final Inspection)</option>
@@ -124,7 +130,7 @@
 
                 <div class="form-group">
                     <label for="ins-inspector-end">Closing Inspector</label>
-                    <select id="ins-inspector-end" onchange="autoSaveActiveFormState()">
+                    <select id="ins-inspector-end" onchange="backupCurrentStateToLocalStorage()">
                         <option value="">-- Select Closing Inspector --</option>
                         <option value="Alex Vazquez">Alex Vazquez (Leak Check)</option>
                         <option value="Andreina Yanez">Andreina Yanez (Final Inspection)</option>
@@ -144,16 +150,19 @@
 
                 <div class="form-group">
                     <label for="ins-serial">Work Order / Serial Number</label>
-                    <input type="text" id="ins-serial" placeholder="e.g., 260205560001" oninput="autoSaveActiveFormState()">
+                    <input type="text" id="ins-serial" placeholder="e.g., 260205560001" oninput="backupCurrentStateToLocalStorage()">
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-title">Report Actions</div>
-                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
-                    <button class="btn btn-success btn-block" style="font-size:16px; padding:15px;" onclick="saveCurrentInspection()">
-                        📦 Save & Pack Unit Data (ZIP)
-                    </button>
+                <div class="card-title">Crash Recovery Tool</div>
+                
+                <div class="form-group row-layout">
+                    <div style="flex: 1;">
+                        <label for="recovery-work-order">Call Work Order Number</label>
+                        <input type="text" id="recovery-work-order" placeholder="Enter Serial to Resume">
+                    </div>
+                    <button class="btn btn-warning" onclick="recoverInspectionSession()">Resume Unit Inspection</button>
                 </div>
             </div>
         </div>
@@ -161,6 +170,12 @@
         <div class="card" id="dynamic-form-card" style="display: none; margin-top: 20px;">
             <div class="card-title" id="dynamic-form-title">Operational Control Form</div>
             <div id="dynamic-fields-container"></div>
+            
+            <div class="master-completion-zone">
+                <button class="btn btn-success" style="font-size: 18px; padding: 16px 35px; width: 100%; max-width: 500px; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" onclick="saveCurrentInspection()">
+                    📦 FINISH INSPECTION & PACK DATA (ZIP)
+                </button>
+            </div>
         </div>
     </div>
 
@@ -173,8 +188,7 @@
 
     <div id="hardware-viewfinder-modal">
         <div class="viewfinder-header">
-            <h3>Evidence Photo Capture (Full Quality)</h3>
-            <div class="viewfinder-filename-preview" id="filename-preview-box"></div>
+            <div class="viewfinder-checkpoint-title" id="viewfinder-target-display">CHECKPOINT TARGET</div>
         </div>
         
         <div class="viewfinder-container">
@@ -182,13 +196,14 @@
         </div>
         
         <div class="viewfinder-controls">
-            <div class="action-row-main">
-                <button class="btn btn-secondary" style="flex: 1;" onclick="abortHardwareStreaming()">✕ Cancel</button>
-                <button class="btn" style="flex: 2; background-color: var(--accent);" onclick="executeShutterSnapshot()">📸 CAPTURE EVIDENCE</button>
+            <div class="photo-action-cluster">
+                <button class="btn" style="background-color: var(--accent);" id="cam-btn-take" onclick="executeShutterSnapshot()">Take Photo</button>
+                <button class="btn btn-warning" id="cam-btn-retake" style="display: none;" onclick="executeShutterSnapshot()">Retake Photo</button>
+                
+                <button class="btn btn-success" id="cam-btn-accept" style="display: none;" onclick="acceptCurrentPhoto()">Accept Photo</button>
+                
+                <button class="btn btn-danger" id="cam-btn-skip" onclick="skipPhotoAttachment()">Skip</button>
             </div>
-            <button class="btn btn-success btn-block" style="padding: 14px; font-size: 15px; font-weight: 600;" onclick="closeAndLockFieldCapture()">
-                ✔️ DONE / FINISH CAPTURE
-            </button>
         </div>
     </div>
 
@@ -216,7 +231,7 @@
         let currentActivePhotos = {};
         let globalCameraStream = null;
         let activeFieldTargetId = null;
-        let photoSnappedForCurrentField = false;
+        let temporaryCapturedDataUrl = null;
 
         window.onload = function() {
             localTemplatesCache = [
@@ -261,8 +276,10 @@
             });
         }
 
-        function loadInspectionForm() {
-            const templateId = document.getElementById('ins-template-select').value;
+        function loadInspectionForm(recoveredState = null) {
+            const templateId = recoveredState ? recoveredState.templateId : document.getElementById('ins-template-select').value;
+            if (!recoveredState) document.getElementById('ins-template-select').value = templateId;
+            
             const container = document.getElementById('dynamic-fields-container');
             const formCard = document.getElementById('dynamic-form-card');
             if (!templateId) { formCard.style.display = 'none'; return; }
@@ -270,44 +287,52 @@
             const template = localTemplatesCache.find(t => t.id === templateId);
             formCard.style.display = 'block';
             container.innerHTML = '';
-            currentActivePhotos = {};
+            
+            currentActivePhotos = recoveredState ? recoveredState.photos || {} : {};
 
             template.fields.forEach(field => {
                 const block = document.createElement('div'); block.className = 'inspection-field-block';
+                const savedComment = recoveredState && recoveredState.comments[field.id] ? recoveredState.comments[field.id] : '';
+                
                 block.innerHTML = `
                     <div class="field-question">${field.question} <span class="field-spec">(${field.spec})</span></div>
-                    <div class="form-group"><input type="text" id="comment_${field.id}" placeholder="Observations"></div>
+                    <div class="form-group"><input type="text" id="comment_${field.id}" value="${savedComment}" placeholder="Observations" oninput="backupCurrentStateToLocalStorage()"></div>
                     <div class="simplified-camera-zone">
                         <div class="camera-controls-row">
                             <div class="camera-status-indicator" id="cam_status_${field.id}"><span>No Photo Attached</span></div>
-                            <button class="btn btn-secondary" onclick="openHardwareViewfinder('${field.id}')">📸 Capture</button>
+                            <button class="btn btn-secondary" onclick="openHardwareViewfinder('${field.id}', '${field.question}')">📸 Capture</button>
                         </div>
                         <div class="photo-preview-container" id="preview_container_${field.id}"><img id="img_preview_${field.id}" src=""></div>
                     </div>
                 `;
                 container.appendChild(block);
+
+                if (currentActivePhotos[field.id]) {
+                    renderPhotoThumbnailInField(field.id, currentActivePhotos[field.id].dataUrl, currentActivePhotos[field.id].filename);
+                }
             });
         }
 
-        async function openHardwareViewfinder(fieldId) {
+        async function openHardwareViewfinder(fieldId, questionText) {
             const serial = document.getElementById('ins-serial').value.trim();
             const inspector = document.getElementById('ins-inspector').value;
             if (!serial || !inspector) return showToast("Set Serial and Inspector first!", "danger");
 
             activeFieldTargetId = fieldId;
-            photoSnappedForCurrentField = false;
+            temporaryCapturedDataUrl = null;
+            
+            document.getElementById('viewfinder-target-display').innerText = questionText;
+            
+            document.getElementById('cam-btn-take').style.display = 'inline-flex';
+            document.getElementById('cam-btn-retake').style.display = 'none';
+            document.getElementById('cam-btn-accept').style.display = 'none';
+
             document.getElementById('hardware-viewfinder-modal').style.display = 'flex';
-            
-            const cleanInspector = inspector.replace(/[^a-zA-Z0-9]/g, '_');
-            const now = new Date();
-            const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-            
-            document.getElementById('filename-preview-box').innerText = `${serial}_${cleanInspector}_${timeStr}.jpg`;
 
             try {
                 globalCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
                 document.getElementById('active-lens-video').srcObject = globalCameraStream;
-            } catch (err) { abortHardwareStreaming(); }
+            } catch (err) { closeHardwareStreaming(); }
         }
 
         function executeShutterSnapshot() {
@@ -319,7 +344,17 @@
             canvas.height = video.videoHeight || 720;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
+            temporaryCapturedDataUrl = canvas.toDataURL('image/jpeg', 1.0);
+            
+            document.getElementById('cam-btn-take').style.display = 'none';
+            document.getElementById('cam-btn-retake').style.display = 'inline-flex';
+            document.getElementById('cam-btn-accept').style.display = 'inline-flex';
+            
+            showToast("Photo captured inside buffer! Click 'Accept Photo' to lock it.", "info");
+        }
+
+        function acceptCurrentPhoto() {
+            if (!temporaryCapturedDataUrl) return showToast("No photo snapshot taken yet!", "danger");
             
             const serial = document.getElementById('ins-serial').value.trim();
             const inspector = document.getElementById('ins-inspector').value;
@@ -328,27 +363,80 @@
             const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
             
             const fname = `${serial}_${cleanInspector}_${timeStr}.jpg`;
-            currentActivePhotos[activeFieldTargetId] = { filename: fname, dataUrl: dataUrl };
+            currentActivePhotos[activeFieldTargetId] = { filename: fname, dataUrl: temporaryCapturedDataUrl };
             
-            document.getElementById(`cam_status_${activeFieldTargetId}`).innerHTML = `<span class="photo-filename-label">🟢 Ready: ${fname}</span>`;
-            document.getElementById(`img_preview_${activeFieldTargetId}`).src = dataUrl;
-            document.getElementById(`preview_container_${activeFieldTargetId}`).style.display = 'block';
+            renderPhotoThumbnailInField(activeFieldTargetId, temporaryCapturedDataUrl, fname);
+            backupCurrentStateToLocalStorage();
             
-            photoSnappedForCurrentField = true;
-            showToast("Photo captured! Press DONE to accept or CAPTURE again to replace.", "info");
+            showToast("Photo verified and linked to check point.", "success");
+            
+            // CLOSES LENS AND RETURNS AUTO TO MAIN CHECKLIST WINDOW
+            closeHardwareStreaming();
         }
 
-        // FUNCIÓN NUEVA: CIERRA LA CÁMARA DE FORMA VOLUNTARIA Y RETORNA AL CHECKLIST
-        function closeAndLockFieldCapture() {
-            if (!photoSnappedForCurrentField && !currentActivePhotos[activeFieldTargetId]) {
-                return showToast("Please capture a photo first, or click Cancel to abort", "danger");
-            }
-            abortHardwareStreaming();
+        function skipPhotoAttachment() {
+            delete currentActivePhotos[activeFieldTargetId];
+            document.getElementById(`cam_status_${activeFieldTargetId}`).innerHTML = '<span>No Photo Attached</span>';
+            document.getElementById(`preview_container_${activeFieldTargetId}`).style.display = 'none';
+            backupCurrentStateToLocalStorage();
+            showToast("Photo constraint bypassed.", "warning");
+            closeHardwareStreaming();
         }
 
-        function abortHardwareStreaming() {
+        function renderPhotoThumbnailInField(fieldId, src, name) {
+            document.getElementById(`cam_status_${fieldId}`).innerHTML = `<span class="photo-filename-label">🟢 Linked: ${name}</span>`;
+            document.getElementById(`img_preview_${fieldId}`).src = src;
+            document.getElementById(`preview_container_${fieldId}`).style.display = 'block';
+        }
+
+        function closeHardwareStreaming() {
             document.getElementById('hardware-viewfinder-modal').style.display = 'none';
             if (globalCameraStream) { globalCameraStream.getTracks().forEach(t => t.stop()); globalCameraStream = null; }
+        }
+
+        function backupCurrentStateToLocalStorage() {
+            const serial = document.getElementById('ins-serial').value.trim();
+            const templateId = document.getElementById('ins-template-select').value;
+            if (!serial || !templateId) return;
+
+            const template = localTemplatesCache.find(t => t.id === templateId);
+            let commentsData = {};
+            template.fields.forEach(f => {
+                const inputEl = document.getElementById(`comment_${f.id}`);
+                if (inputEl) commentsData[f.id] = inputEl.value.trim();
+            });
+
+            const backupPayload = {
+                serial: serial,
+                templateId: templateId,
+                inspectorStart: document.getElementById('ins-inspector').value,
+                inspectorEnd: document.getElementById('ins-inspector-end').value,
+                comments: commentsData,
+                photos: currentActivePhotos,
+                timestamp: Date.now()
+            };
+
+            localStorage.setItem(`workorder_buffer_${serial}`, JSON.stringify(backupPayload));
+        }
+
+        function recoverInspectionSession() {
+            const targetSerial = document.getElementById('recovery-work-order').value.trim();
+            if (!targetSerial) return showToast("Please input a valid Work Order serial!", "danger");
+
+            const cachedSession = localStorage.getItem(`workorder_buffer_${targetSerial}`);
+            if (!cachedSession) return showToast("No stored data found for this Work Order serial!", "danger");
+
+            try {
+                const session = JSON.parse(cachedSession);
+                document.getElementById('ins-serial').value = session.serial;
+                document.getElementById('ins-inspector').value = session.inspectorStart || '';
+                document.getElementById('ins-inspector-end').value = session.inspectorEnd || '';
+                
+                loadInspectionForm(session);
+                showToast("Inspection records retrieved successfully!", "success");
+            } catch (err) {
+                showToast("Error processing local recovery buffer.", "danger");
+            }
         }
 
         function saveCurrentInspection() {
@@ -407,15 +495,15 @@
                 downloadLink.click();
                 document.body.removeChild(downloadLink);
                 
+                localStorage.removeItem(`workorder_buffer_${serial}`);
                 showToast("Unit data safely packed & stored locally!", "success");
                 resetForm();
             });
         }
 
-        function autoSaveActiveFormState() {}
-
         function resetForm() {
             document.getElementById('ins-serial').value = '';
+            document.getElementById('recovery-work-order').value = '';
             document.getElementById('dynamic-form-card').style.display = 'none';
             currentActivePhotos = {};
         }
