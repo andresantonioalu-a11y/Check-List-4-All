@@ -298,7 +298,6 @@
             display: block;
         }
 
-        /* Contenedor de la Vista Previa de la Foto */
         .photo-preview-container {
             display: none;
             width: 100%;
@@ -856,4 +855,606 @@
 
             if (remoteDB) {
                 remoteDB.ref('templates/' + newTemplate.id).set(newTemplate)
-                    .
+                    .then(() => showToast("Checklist successfully published to cloud", "success"))
+                    .catch(() => showToast("Saved to offline cache buffer", "warning"));
+            } else {
+                showToast("Checklist archived in local terminal memory", "warning");
+            }
+
+            document.getElementById('tmpl-name').value = '';
+            renderTemplatesList();
+            updateFormTemplateDropdown();
+        }
+
+        function renderTemplatesList() {
+            const list = document.getElementById('admin-templates-list');
+            if (!list) return;
+            if (localTemplatesCache.length === 0) {
+                list.innerHTML = '<div class="list-item"><p>No checklist structures registered.</p></div>';
+                return;
+            }
+            list.innerHTML = '';
+            localTemplatesCache.forEach(t => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
+                    <div class="item-info">
+                        <h4>${t.name}</h4>
+                        <p>Dept Group: <strong>${t.dept}</strong> | Monitored Lines: ${t.fields.length}</p>
+                    </div>
+                    <button class="btn btn-danger btn-icon" onclick="deleteTemplate('${t.id}')">Delete</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function deleteTemplate(id) {
+            if(!confirm("Purge checklist blueprint infrastructure?")) return;
+            localTemplatesCache = localTemplatesCache.filter(t => t.id !== id);
+            localStorage.setItem('inspectflow_templates', JSON.stringify(localTemplatesCache));
+            if (remoteDB) remoteDB.ref('templates/' + id).remove().then(() => showToast("Blueprint purged from cloud system", "success"));
+            renderTemplatesList();
+            updateFormTemplateDropdown();
+        }
+
+        function updateFormTemplateDropdown() {
+            const select = document.getElementById('ins-template-select');
+            if(!select) return;
+            select.innerHTML = '<option value="">-- Select Active Verification Guide --</option>';
+            localTemplatesCache.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.innerText = `[${t.dept}] - ${t.name}`;
+                select.appendChild(opt);
+            });
+        }
+
+        function loadInspectionForm(preloadedState = null) {
+            const templateId = preloadedState ? preloadedState.templateId : document.getElementById('ins-template-select').value;
+            const container = document.getElementById('dynamic-fields-container');
+            const formCard = document.getElementById('dynamic-form-card');
+            const pauseBtn = document.getElementById('btn-global-pause');
+            
+            if (!templateId) {
+                formCard.style.display = 'none';
+                pauseBtn.style.display = 'none';
+                return;
+            }
+
+            const template = localTemplatesCache.find(t => t.id === templateId);
+            if (!template) return;
+
+            formCard.style.display = 'block';
+            pauseBtn.style.display = 'block';
+            document.getElementById('dynamic-form-title').innerText = `Active Protocol: ${template.name}`;
+            container.innerHTML = '';
+            
+            if (preloadedState) {
+                currentActivePhotos = preloadedState.photos || {};
+            } else {
+                currentActivePhotos = {};
+                localStorage.removeItem('inspectflow_crash_buffer'); 
+            }
+            abortHardwareStreaming();
+
+            let sections = {};
+            template.fields.forEach(f => {
+                if (!sections[f.section]) sections[f.section] = [];
+                sections[f.section].push(f);
+            });
+
+            for (let secName in sections) {
+                const secTitle = document.createElement('div');
+                secTitle.className = 'inspection-section-title';
+                secTitle.innerText = secName.toUpperCase();
+                container.appendChild(secTitle);
+
+                sections[secName].forEach(field => {
+                    const block = document.createElement('div');
+                    block.className = 'inspection-field-block';
+                    block.id = `block_${field.id}`;
+                    
+                    let specHtml = field.spec ? `<span class="field-spec">⚠️ ENGINEERING SPEC LIMIT: ${field.spec}</span>` : '';
+                    
+                    let savedComment = '';
+                    let photoLabel = 'No Photo Attached';
+                    let photoClass = '';
+                    let takeBtnText = 'Take Picture';
+                    let takeBtnClass = 'btn btn-secondary btn-icon';
+                    let previewDisplayStyle = 'none';
+                    let previewSrc = '';
+
+                    if (preloadedState && preloadedState.answers[field.id]) {
+                        savedComment = preloadedState.answers[field.id].comment || '';
+                    }
+
+                    if (currentActivePhotos[field.id]) {
+                        photoLabel = `🟢 Photo Captured:<br><span class="photo-filename-label">${currentActivePhotos[field.id].filename}</span>`;
+                        photoClass = 'captured';
+                        takeBtnText = 'Re-take Picture';
+                        takeBtnClass = 'btn btn-danger btn-icon';
+                        previewDisplayStyle = 'block';
+                        previewSrc = currentActivePhotos[field.id].blobData;
+                    }
+                    
+                    block.innerHTML = `
+                        <div class="field-header">
+                            <div>
+                                <div class="field-question">${field.question}</div>
+                                ${specHtml}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="comment_${field.id}" value="${savedComment}" oninput="autoSaveActiveFormState()" placeholder="Enter measurements, readings or anomaly notes...">
+                        </div>
+                        
+                        <div class="simplified-camera-zone">
+                            <div class="camera-controls-row">
+                                <div class="camera-status-indicator ${photoClass}" id="cam_status_${field.id}">
+                                    <span>${photoLabel}</span>
+                                </div>
+                                <div class="camera-actions-group">
+                                    <button class="${takeBtnClass}" id="btn_take_${field.id}" onclick="openHardwareViewfinder('${field.id}')">${takeBtnText}</button>
+                                    <button class="btn btn-secondary btn-icon" id="btn_skip_${field.id}" onclick="skipHardwareEvidence('${field.id}')">Skip Picture</button>
+                                </div>
+                            </div>
+                            
+                            <div class="photo-preview-container" id="preview_container_${field.id}" style="display: ${previewDisplayStyle};">
+                                <img id="img_preview_${field.id}" src="${previewSrc}" alt="Preview">
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(block);
+                });
+            }
+        }
+
+        async function openHardwareViewfinder(fieldId) {
+            const serial = document.getElementById('ins-serial').value.trim();
+            const inspector = document.getElementById('ins-inspector').value;
+
+            if (!serial || !inspector) {
+                showToast("Work Order and Assigned Inspector are required BEFORE taking photos to structure the filename.", "danger");
+                return;
+            }
+
+            activeFieldTargetId = fieldId;
+            const overlay = document.getElementById('hardware-viewfinder-modal');
+            const video = document.getElementById('active-lens-video');
+            const previewBox = document.getElementById('filename-preview-box');
+            
+            const cleanInspector = inspector.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const today = new Date();
+            const dateStr = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear()}`;
+            const computedFilename = `${serial}${cleanInspector}${dateStr}.jpg`;
+
+            previewBox.innerText = `Filename: ${computedFilename}`;
+            overlay.style.display = 'flex';
+
+            try {
+                if (globalCameraStream) {
+                    globalCameraStream.getTracks().forEach(t => t.stop());
+                }
+
+                globalCameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: "environment",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                });
+
+                video.srcObject = globalCameraStream;
+                await video.play();
+
+            } catch (err) {
+                console.error("Viewfinder failed:", err);
+                showToast("Failed to lock hardware stream. Check camera permissions.", "danger");
+                abortHardwareStreaming();
+            }
+        }
+
+        function executeShutterSnapshot() {
+            if (!activeFieldTargetId || !globalCameraStream) return;
+
+            const video = document.getElementById('active-lens-video');
+            const canvas = document.getElementById('hidden-bg-canvas');
+            
+            const statusLabel = document.getElementById(`cam_status_${activeFieldTargetId}`);
+            const takeBtn = document.getElementById(`btn_take_${activeFieldTargetId}`);
+            const previewContainer = document.getElementById(`preview_container_${activeFieldTargetId}`);
+            const previewImg = document.getElementById(`img_preview_${activeFieldTargetId}`);
+            
+            const serial = document.getElementById('ins-serial').value.trim();
+            const inspector = document.getElementById('ins-inspector').value;
+
+            try {
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+                
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+                const cleanInspector = inspector.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const today = new Date();
+                const dateStr = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear()}`;
+                const finalName = `${serial}${cleanInspector}${dateStr}.jpg`;
+
+                currentActivePhotos[activeFieldTargetId] = {
+                    filename: finalName,
+                    blobData: dataUrl
+                };
+
+                autoSaveActiveFormState();
+
+                statusLabel.className = "camera-status-indicator captured";
+                statusLabel.innerHTML = `<span>🟢 Photo Captured:<br><span class="photo-filename-label">${finalName}</span></span>`;
+                takeBtn.innerText = "Re-take Picture";
+                takeBtn.className = "btn btn-danger btn-icon";
+                
+                previewImg.src = dataUrl;
+                previewContainer.style.display = 'block';
+                
+                showToast("Evidence snapshot captured & securely written to local memory", "success");
+                abortHardwareStreaming();
+
+            } catch (err) {
+                console.error("Shutter processing failed:", err);
+                showToast("Buffer processing error.", "danger");
+            }
+        }
+
+        function abortHardwareStreaming() {
+            const overlay = document.getElementById('hardware-viewfinder-modal');
+            const video = document.getElementById('active-lens-video');
+            
+            overlay.style.display = 'none';
+            video.srcObject = null;
+
+            if (globalCameraStream) {
+                globalCameraStream.getTracks().forEach(track => track.stop());
+                globalCameraStream = null;
+            }
+            activeFieldTargetId = null;
+        }
+
+        function skipHardwareEvidence(fieldId) {
+            const statusLabel = document.getElementById('cam_status_' + fieldId);
+            const takeBtn = document.getElementById('btn_take_' + fieldId);
+            const previewContainer = document.getElementById('preview_container_' + fieldId);
+            const previewImg = document.getElementById('img_preview_' + fieldId);
+            
+            delete currentActivePhotos[fieldId];
+            autoSaveActiveFormState();
+            
+            statusLabel.className = "camera-status-indicator";
+            statusLabel.innerHTML = `<span>⚪ Skipped</span>`;
+            takeBtn.innerText = "Take Picture";
+            takeBtn.className = "btn btn-secondary btn-icon";
+            
+            previewImg.src = "";
+            previewContainer.style.display = 'none';
+            
+            showToast("Evidence marked as bypassed", "info");
+        }
+
+        function openPauseModal() {
+            const serial = document.getElementById('ins-serial').value.trim();
+            if (!serial) {
+                showToast("A Work Order Number is required to hold structural states.", "danger");
+                return;
+            }
+            document.getElementById('pause-pin').value = '';
+            document.getElementById('pause-modal').style.display = 'flex';
+        }
+
+        function closePauseModal() {
+            document.getElementById('pause-modal').style.display = 'none';
+        }
+
+        function executePauseAndLock() {
+            const pin = document.getElementById('pause-pin').value.trim();
+            const serial = document.getElementById('ins-serial').value.trim();
+            const templateId = document.getElementById('ins-template-select').value;
+            const inspector = document.getElementById('ins-inspector').value;
+            const inspectorEnd = document.getElementById('ins-inspector-end').value;
+
+            if (pin.length !== 4 || isNaN(pin)) {
+                showToast("Security PIN validation abort: Exactly 4 digits required.", "danger");
+                return;
+            }
+
+            const template = localTemplatesCache.find(t => t.id === templateId);
+            let collectedAnswers = {};
+
+            template.fields.forEach(f => {
+                const comment = document.getElementById(`comment_${f.id}`).value.trim();
+                collectedAnswers[f.id] = { comment: comment };
+            });
+
+            const pauseSessionPackage = {
+                serial: serial,
+                templateId: templateId,
+                inspector: inspector,
+                inspectorEnd: inspectorEnd,
+                pin: pin,
+                answers: collectedAnswers,
+                photos: currentActivePhotos,
+                timestamp: Date.now()
+            };
+
+            localPausedCache[serial.toUpperCase()] = pauseSessionPackage;
+            localStorage.setItem('inspectflow_paused', JSON.stringify(localPausedCache));
+
+            if (remoteDB) {
+                const cloudPauseCopy = JSON.parse(JSON.stringify(pauseSessionPackage));
+                for(let fid in cloudPauseCopy.photos) {
+                    cloudPauseCopy.photos[fid].blobData = "[Stored Locally on Terminal Device]";
+                }
+                remoteDB.ref('paused_sessions/' + serial.toUpperCase()).set(cloudPauseCopy)
+                    .then(() => showToast("Session state locked to Cloud metadata registry.", "success"))
+                    .catch(() => showToast("Session locked locally inside current terminal.", "warning"));
+            } else {
+                showToast("Session locked locally inside current terminal (Offline Mode).", "warning");
+            }
+
+            localStorage.removeItem('inspectflow_crash_buffer');
+            resetInspectionScreen();
+            closePauseModal();
+        }
+
+        function openResumeModal() {
+            document.getElementById('resume-serial').value = '';
+            document.getElementById('resume-pin').value = '';
+            document.getElementById('resume-modal').style.display = 'flex';
+        }
+
+        function closeResumeModal() {
+            document.getElementById('resume-modal').style.display = 'none';
+        }
+
+        function executeResumeAuth() {
+            const targetSerial = document.getElementById('resume-serial').value.trim().toUpperCase();
+            const enteredPin = document.getElementById('resume-pin').value.trim();
+
+            if (!targetSerial || !enteredPin) {
+                showToast("Please provide both Work Order and Security PIN.", "danger");
+                return;
+            }
+
+            const loadSession = (sessionData) => {
+                if (sessionData.pin !== enteredPin) {
+                    showToast("Authentication Failed: Invalid PIN entry.", "danger");
+                    return;
+                }
+
+                document.getElementById('ins-serial').value = sessionData.serial;
+                document.getElementById('ins-template-select').value = sessionData.templateId;
+                document.getElementById('ins-inspector').value = sessionData.inspector || '';
+                document.getElementById('ins-inspector-end').value = sessionData.inspectorEnd || '';
+
+                if(localPausedCache[targetSerial] && localPausedCache[targetSerial].photos) {
+                    sessionData.photos = localPausedCache[targetSerial].photos;
+                }
+
+                loadInspectionForm(sessionData);
+                
+                delete localPausedCache[targetSerial];
+                localStorage.setItem('inspectflow_paused', JSON.stringify(localPausedCache));
+                if (remoteDB) remoteDB.ref('paused_sessions/' + targetSerial).remove();
+
+                autoSaveActiveFormState(); 
+                showToast("Authentication Success! Progress restored.", "success");
+                closeResumeModal();
+            };
+
+            if (remoteDB) {
+                remoteDB.ref('paused_sessions/' + targetSerial).once('value')
+                    .then((snapshot) => {
+                        const cloudSession = snapshot.val();
+                        if (cloudSession) {
+                            loadSession(cloudSession);
+                        } else if (localPausedCache[targetSerial]) {
+                            loadSession(localPausedCache[targetSerial]);
+                        } else {
+                            showToast("No suspended data found matching this Work Order.", "danger");
+                        }
+                    })
+                    .catch(() => {
+                        if (localPausedCache[targetSerial]) {
+                            loadSession(localPausedCache[targetSerial]);
+                        } else {
+                            showToast("Error establishing network query pipeline.", "danger");
+                        }
+                    });
+            } else {
+                if (localPausedCache[targetSerial]) {
+                    loadSession(localPausedCache[targetSerial]);
+                } else {
+                    showToast("No matched session data inside offline cache registry.", "danger");
+                }
+            }
+        }
+
+        function saveCurrentInspection() {
+            const inspector = document.getElementById('ins-inspector').value;
+            const inspectorEnd = document.getElementById('ins-inspector-end').value;
+            const templateId = document.getElementById('ins-template-select').value;
+            const serial = document.getElementById('ins-serial').value.trim();
+
+            if (!inspector || !inspectorEnd || !templateId || !serial) {
+                showToast("Please ensure Initial Inspector, Closing Inspector, Checklist, and Work Order are filled.", "danger");
+                return;
+            }
+
+            const template = localTemplatesCache.find(t => t.id === templateId);
+            let evaluationResults = [];
+
+            template.fields.forEach(f => {
+                const comment = document.getElementById(`comment_${f.id}`).value.trim();
+                const hasPhotoAttached = currentActivePhotos[f.id] ? true : false;
+                const assignedFilename = currentActivePhotos[f.id] ? currentActivePhotos[f.id].filename : "N/A";
+
+                evaluationResults.push({
+                    fieldId: f.id,
+                    question: f.question,
+                    section: f.section,
+                    comment: comment,
+                    photoAttached: hasPhotoAttached,
+                    photoName: assignedFilename
+                });
+            });
+
+            const reportId = 'rep_' + Date.now();
+            const finalizedReport = {
+                id: reportId,
+                serial: serial,
+                inspectorStart: inspector,
+                inspectorEnd: inspectorEnd,
+                templateId: templateId,
+                templateName: template.name,
+                department: template.dept,
+                results: evaluationResults,
+                timestamp: Date.now(),
+                synced: false,
+                localBinaryPhotos: currentActivePhotos 
+            };
+
+            localReportsCache.push(finalizedReport);
+            localStorage.setItem('inspectflow_reports', JSON.stringify(localReportsCache));
+
+            if (remoteDB) {
+                const cloudCopy = JSON.parse(JSON.stringify(finalizedReport));
+                cloudCopy.synced = true;
+                if (cloudCopy.localBinaryPhotos) delete cloudCopy.localBinaryPhotos; 
+
+                remoteDB.ref('reports/' + reportId).set(cloudCopy)
+                    .then(() => {
+                        const idx = localReportsCache.findIndex(r => r.id === reportId);
+                        if (idx !== -1) {
+                            localReportsCache[idx].synced = true;
+                            localStorage.setItem('inspectflow_reports', JSON.stringify(localReportsCache));
+                        }
+                        showToast("Inspection logged and metadata synced to cloud safely.", "success");
+                        renderReportsList();
+                    })
+                    .catch(() => {
+                        showToast("Report cached safely to unit terminal buffer memory.", "warning");
+                        renderReportsList();
+                    });
+            } else {
+                showToast("Audit report generated and compiled locally.", "warning");
+                renderReportsList();
+            }
+
+            localStorage.removeItem('inspectflow_crash_buffer');
+            resetInspectionScreen();
+        }
+
+        function resetInspectionScreen() {
+            document.getElementById('ins-serial').value = '';
+            document.getElementById('ins-template-select').value = '';
+            document.getElementById('dynamic-form-card').style.display = 'none';
+            document.getElementById('btn-global-pause').style.display = 'none';
+            document.getElementById('dynamic-fields-container').innerHTML = '';
+            currentActivePhotos = {};
+            abortHardwareStreaming();
+        }
+
+        function renderReportsList() {
+            const list = document.getElementById('saved-reports-list');
+            if (!list) return;
+            if (localReportsCache.length === 0) {
+                list.innerHTML = '<div class="list-item"><p>No factory reports stored inside database logs.</p></div>';
+                return;
+            }
+            list.innerHTML = '';
+            const sorted = [...localReportsCache].sort((a,b) => b.timestamp - a.timestamp);
+            sorted.forEach(r => {
+                const item = document.createElement('div');
+                const syncBadge = r.synced ? '<span class="badge badge-accent">Cloud Metadata</span>' : '<span class="badge badge-warning">Local Only</span>';
+                const dateStr = new Date(r.timestamp).toLocaleDateString() + ' ' + new Date(r.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const totalPhotos = r.localBinaryPhotos ? Object.keys(r.localBinaryPhotos).length : 0;
+
+                item.className = `list-item`;
+                item.innerHTML = `
+                    <div class="item-info">
+                        <h4>Work Order: ${r.serial}</h4>
+                        <p>${dateStr} | Started: <strong>${r.inspectorStart}</strong> | Closed: <strong>${r.inspectorEnd}</strong></p>
+                        <p style="font-size:12px; color:var(--accent);">Media attached: ${totalPhotos} local image(s)</p>
+                    </div>
+                    <div class="actions-cell" style="display:flex; align-items:center; gap:8px;">
+                        ${syncBadge}
+                        <button class="btn btn-danger" style="padding:4px 8px; font-size:11px;" onclick="deleteReport('${r.id}')">✕</button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function deleteReport(id) {
+            if(!confirm("Purge report record and its local images completely?")) return;
+            localReportsCache = localReportsCache.filter(r => r.id !== id);
+            localStorage.setItem('inspectflow_reports', JSON.stringify(localReportsCache));
+            if (remoteDB) remoteDB.ref('reports/' + id).remove().then(() => showToast("Record removed from cloud log index.", "success"));
+            renderReportsList();
+        }
+
+        function exportAllToZip() {
+            if (localReportsCache.length === 0) {
+                showToast("No active data entries discovered to structure data payload.", "danger");
+                return;
+            }
+            const zip = new JSZip();
+            let csvContent = "\uFEFF";
+            csvContent += "Report ID,Work Order Serial,Inspector Init,Inspector End,Department,Template Baseline,Timestamp,Control Point,Section,Remarks,Attached Image Filename\n";
+
+            localReportsCache.forEach(r => {
+                const dateStr = new Date(r.timestamp).toLocaleString();
+                const cleanInspectorFolder = r.inspectorEnd.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const folderName = `${r.serial}_${cleanInspectorFolder}`;
+
+                r.results.forEach(res => {
+                    const cleanComment = (res.comment || "").replace(/"/g, '""');
+                    csvContent += `"${r.id}","${r.serial}","${r.inspectorStart}","${r.inspectorEnd}","${r.department}","${r.templateName}","${dateStr}","${res.question}","${res.section}","${cleanComment}","${res.photoName}"\n`;
+                });
+
+                if (r.localBinaryPhotos && Object.keys(r.localBinaryPhotos).length > 0) {
+                    for (let fid in r.localBinaryPhotos) {
+                        const imgObj = r.localBinaryPhotos[fid];
+                        if (imgObj && imgObj.blobData && imgObj.blobData.includes(',')) {
+                            try {
+                                const byteString = atob(imgObj.blobData.split(',')[1]);
+                                const ab = new ArrayBuffer(byteString.length);
+                                const ia = new Uint8Array(ab);
+                                for (let i = 0; i < byteString.length; i++) {
+                                    ia[i] = byteString.charCodeAt(i);
+                                }
+                                const blob = new Blob([ab], { type: 'image/jpeg' });
+                                zip.file(`${folderName}/${imgObj.filename}`, blob);
+                            } catch (e) {
+                                console.error("Error packaging binary image:", e);
+                            }
+                        }
+                    }
+                }
+            });
+
+            zip.file("CONSOLIDATED_QUALITY_LOG_AUDIT.csv", csvContent);
+            showToast("Assembling structured folders and binary arrays... Please wait.", "info");
+            
+            zip.generateAsync({ type: "blob" }).then(function(content) {
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(content);
+                link.download = `FACTORY_QUALITY_DATA_ADDISON_HVAC_${Date.now()}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast("ZIP master folder package downloaded successfully!", "success");
+            });
+        }
+    </script>
+</body>
+</html>
