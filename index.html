@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InspectFlow Pro - Quality Inspection System</title>
     
+    <!-- Firebase App and Realtime Database (Compat SDKs) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     
+    <!-- JSZip Library for report packaging -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <style>
@@ -340,7 +342,7 @@
         .report-summary-card.pass { border-left-color: var(--success); }
         .report-summary-card.fail { border-left-color: var(--danger); }
 
-        /* PAUSE MODAL SYSTEM STYLES */
+        /* MODAL STYLES */
         .custom-modal {
             display: none;
             position: fixed;
@@ -373,6 +375,56 @@
             gap: 10px;
             margin-top: 20px;
         }
+
+        /* LIVE CAMERA VIEWFINDER OVERLAY */
+        #hardware-viewfinder-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000000;
+            z-index: 3000;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 10px;
+        }
+
+        .viewfinder-header {
+            color: white;
+            text-align: center;
+            width: 100%;
+        }
+        .viewfinder-header h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+        .viewfinder-header p { font-size: 12px; color: #94a3b8; }
+
+        .viewfinder-container {
+            width: 100%;
+            max-width: 480px;
+            height: 60vh;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #334155;
+            background-color: #1e293b;
+            position: relative;
+        }
+
+        #active-lens-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .viewfinder-controls {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            padding-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -393,6 +445,7 @@
         <button id="btn-nav-admin" class="nav-btn" onclick="switchView('admin-view', this)">Admin Control Panel</button>
     </nav>
 
+    <!-- VIEW 1: INSPECTOR MODE -->
     <div id="inspector-view" class="view-panel active">
         <div class="grid-2">
             <div class="card">
@@ -454,6 +507,7 @@
         </div>
     </div>
 
+    <!-- VIEW 2: ADMIN PANEL -->
     <div id="admin-view" class="view-panel">
         <div class="grid-2">
             <div class="card">
@@ -517,6 +571,7 @@
         </div>
     </div>
 
+    <!-- MODAL: SET PAUSE PIN -->
     <div id="pause-modal" class="custom-modal">
         <div class="modal-content">
             <div class="modal-title">Pause Inspection Session</div>
@@ -534,6 +589,7 @@
         </div>
     </div>
 
+    <!-- MODAL: RESUME PIN AUTHENTICATION -->
     <div id="resume-modal" class="custom-modal">
         <div class="modal-content">
             <div class="modal-title">Resume Paused Inspection</div>
@@ -552,7 +608,21 @@
         </div>
     </div>
 
-    <video id="hidden-bg-video" autoplay playsinline style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;"></video>
+    <!-- INTERFAZ INTERACTIVA COMPLETA DE CÁMARA (INTERSECCIÓN DOM) -->
+    <div id="hardware-viewfinder-modal">
+        <div class="viewfinder-header">
+            <h3 id="viewfinder-title-label">Camera Verification Mode</h3>
+            <p>Align the mechanical checkpoint inside the viewfinder</p>
+        </div>
+        <div class="viewfinder-container">
+            <video id="active-lens-video" autoplay playsinline></video>
+        </div>
+        <div class="viewfinder-controls">
+            <button class="btn btn-secondary" style="flex:1;" onclick="abortHardwareStreaming()">✕ Cancel</button>
+            <button class="btn btn-success" style="flex:2; font-size:16px;" onclick="executeShutterSnapshot()">📸 SNAP SHOT</button>
+        </div>
+    </div>
+
     <canvas id="hidden-bg-canvas" style="display:none;"></canvas>
 
     <div id="toast-container"></div>
@@ -592,7 +662,9 @@
         let localReportsCache = [];
         let localPausedCache = {}; 
         let currentActivePhotos = {};
+        
         let globalCameraStream = null;
+        let activeFieldTargetId = null;
 
         window.onload = function() {
             loadLocalData();
@@ -820,7 +892,7 @@
             } else {
                 currentActivePhotos = {};
             }
-            releaseGlobalCamera();
+            abortHardwareStreaming();
 
             let sections = {};
             template.fields.forEach(f => {
@@ -886,7 +958,7 @@
                                 <span>${photoLabel}</span>
                             </div>
                             <div class="camera-actions-group">
-                                <button class="${takeBtnClass}" id="btn_take_${field.id}" onclick="triggerHardwareCapture('${field.id}')">${takeBtnText}</button>
+                                <button class="${takeBtnClass}" id="btn_take_${field.id}" onclick="openHardwareViewfinder('${field.id}')">${takeBtnText}</button>
                                 <button class="btn btn-secondary btn-icon" id="btn_skip_${field.id}" onclick="skipHardwareEvidence('${field.id}')">Skip Picture</button>
                             </div>
                         </div>
@@ -897,52 +969,86 @@
             evaluateFormCounters();
         }
 
-        function releaseGlobalCamera() {
-            if (globalCameraStream) {
-                globalCameraStream.getTracks().forEach(track => track.stop());
-                globalCameraStream = null;
+        // CONTROL DE FLUJO INTERACTIVO (VISOR COMPLETO ACTIVO)
+        async function openHardwareViewfinder(fieldId) {
+            activeFieldTargetId = fieldId;
+            const overlay = document.getElementById('hardware-viewfinder-modal');
+            const video = document.getElementById('active-lens-video');
+            
+            overlay.style.display = 'flex';
+            showToast("Initializing camera stream...", "info");
+
+            try {
+                if (globalCameraStream) {
+                    globalCameraStream.getTracks().forEach(t => t.stop());
+                }
+
+                globalCameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: "environment",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                });
+
+                video.srcObject = globalCameraStream;
+                
+                // Forzar reproducción inmediata sobre elemento 100% visible
+                await video.play();
+
+            } catch (err) {
+                console.error("Viewfinder initialization failed:", err);
+                showToast("Failed to lock hardware stream. Check browser security settings.", "danger");
+                abortHardwareStreaming();
             }
         }
 
-        // NUEVA LOGICA BAJO DEMANDA: Inicializa y captura en el mismo clic para saltar bloqueos de Android/iOS
-        async function triggerHardwareCapture(fieldId) {
-            const video = document.getElementById('hidden-bg-video');
-            const canvas = document.getElementById('hidden-bg-canvas');
-            const statusLabel = document.getElementById(`cam_status_${fieldId}`);
-            const takeBtn = document.getElementById(`btn_take_${fieldId}`);
+        function executeShutterSnapshot() {
+            if (!activeFieldTargetId || !globalCameraStream) return;
 
-            showToast("Accessing hardware lens... Please hold unit steady", "info");
+            const video = document.getElementById('active-lens-video');
+            const canvas = document.getElementById('hidden-bg-canvas');
+            const statusLabel = document.getElementById(`cam_status_${activeFieldTargetId}`);
+            const takeBtn = document.getElementById(`btn_take_${activeFieldTargetId}`);
 
             try {
-                // Si la cámara no está encendida, la encendemos justo ahora (acción del usuario válida)
-                if (!globalCameraStream) {
-                    globalCameraStream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: "environment" }, 
-                        audio: false 
-                    });
-                    video.srcObject = globalCameraStream;
-                    // Pequeña pausa técnica de 300ms para permitir que el sensor del celular calibre la luz
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                }
-
                 const context = canvas.getContext('2d');
                 canvas.width = video.videoWidth || 640;
                 canvas.height = video.videoHeight || 480;
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
                 
+                // Mapeo directo de fotograma renderizado
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-                currentActivePhotos[fieldId] = [dataUrl]; 
+
+                currentActivePhotos[activeFieldTargetId] = [dataUrl];
 
                 statusLabel.className = "camera-status-indicator captured";
                 statusLabel.innerHTML = `<span>🟢 Photo Captured</span>`;
                 takeBtn.innerText = "Re-take Picture";
                 takeBtn.className = "btn btn-danger btn-icon";
-                showToast("Evidence snapshot locked successfully", "success");
+                
+                showToast("Evidence snapshot captured successfully", "success");
+                abortHardwareStreaming();
 
             } catch (err) {
-                console.error("Camera interface initialization failed:", err);
-                showToast("Hardware connection blocked. Please verify browser camera permissions.", "danger");
+                console.error("Shutter processing failed:", err);
+                showToast("Buffer processing error.", "danger");
             }
+        }
+
+        function abortHardwareStreaming() {
+            const overlay = document.getElementById('hardware-viewfinder-modal');
+            const video = document.getElementById('active-lens-video');
+            
+            overlay.style.display = 'none';
+            video.srcObject = null;
+
+            if (globalCameraStream) {
+                globalCameraStream.getTracks().forEach(track => track.stop());
+                globalCameraStream = null;
+            }
+            activeFieldTargetId = null;
         }
 
         function skipHardwareEvidence(fieldId) {
@@ -1041,7 +1147,7 @@
             document.getElementById('dynamic-fields-container').innerHTML = '';
             currentActivePhotos = {};
             evaluateFormCounters();
-            releaseGlobalCamera();
+            abortHardwareStreaming();
             closePauseModal();
         }
 
@@ -1203,7 +1309,7 @@
             document.getElementById('dynamic-fields-container').innerHTML = '';
             currentActivePhotos = {};
             evaluateFormCounters();
-            releaseGlobalCamera();
+            abortHardwareStreaming();
         }
 
         function renderReportsList() {
