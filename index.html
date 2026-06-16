@@ -1,13 +1,15 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InspectFlow Pro - Sistema de Inspección de Calidad</title>
+    <title>InspectFlow Pro - Quality Inspection System</title>
     
+    <!-- Firebase App and Realtime Database (Compat SDKs) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     
+    <!-- JSZip Library for report packaging -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <style>
@@ -82,7 +84,6 @@
             background-color: currentColor;
         }
 
-        /* Navegación por Pestañas de Roles */
         .role-nav {
             display: flex;
             background-color: var(--primary-light);
@@ -101,9 +102,7 @@
             border-bottom: 3px solid transparent;
         }
 
-        .nav-btn:hover {
-            color: white;
-        }
+        .nav-btn:hover { color: white; }
 
         .nav-btn.active {
             color: white;
@@ -111,7 +110,6 @@
             background-color: rgba(255,255,255,0.05);
         }
 
-        /* Contenedores de Vistas */
         .view-panel {
             display: none;
             padding: 20px;
@@ -119,11 +117,8 @@
             margin: 0 auto;
         }
 
-        .view-panel.active {
-            display: block;
-        }
+        .view-panel.active { display: block; }
 
-        /* Componentes Comunes de Layout */
         .grid-2 {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -152,10 +147,7 @@
             align-items: center;
         }
 
-        /* Formularios Estilizados */
-        .form-group {
-            margin-bottom: 15px;
-        }
+        .form-group { margin-bottom: 15px; }
 
         label {
             display: block;
@@ -173,7 +165,6 @@
             font-size: 14px;
             color: var(--text);
             background-color: #ffffff;
-            transition: border-color 0.1s;
         }
 
         input:focus, select:focus, textarea:focus {
@@ -181,18 +172,6 @@
             border-color: var(--accent);
         }
 
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .checkbox-group input {
-            width: auto;
-        }
-
-        /* Botones Profesionales */
         .btn {
             background-color: var(--accent);
             color: white;
@@ -206,22 +185,15 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            transition: background-color 0.1s;
         }
 
         .btn:hover { background-color: var(--accent-hover); }
         .btn-success { background-color: var(--success); }
-        .btn-success:hover { background-color: #117e3a; }
         .btn-warning { background-color: var(--warning); }
-        .btn-warning:hover { background-color: #c2410c; }
         .btn-danger { background-color: var(--danger); }
-        .btn-danger:hover { background-color: #b91c1c; }
         .btn-secondary { background-color: #64748b; }
-        .btn-secondary:hover { background-color: #475569; }
-        
         .btn-block { width: 100%; }
         
-        /* Listas y Tablas Dinámicas */
         .items-list {
             max-height: 350px;
             overflow-y: auto;
@@ -238,24 +210,8 @@
             background-color: #ffffff;
         }
 
-        .list-item:last-child { border-bottom: none; }
         .list-item:nth-child(even) { background-color: #f8fafc; }
 
-        .item-info h4 { font-size: 14px; font-weight: 600; }
-        .item-info p { font-size: 12px; color: var(--text-muted); }
-
-        .actions-cell {
-            display: flex;
-            gap: 6px;
-        }
-
-        .btn-icon {
-            padding: 6px;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-
-        /* Estilos del Constructor de Plantillas */
         .builder-row {
             display: flex;
             gap: 10px;
@@ -266,7 +222,6 @@
             align-items: flex-end;
         }
 
-        /* Estilos del Motor Dinámico de Inspección */
         .inspection-section-title {
             background-color: #e2e8f0;
             padding: 6px 12px;
@@ -317,76 +272,39 @@
             gap: 6px;
             font-size: 13px;
             cursor: pointer;
-            font-weight: normal;
-            margin-bottom: 0;
         }
 
         .radio-label input { width: auto; }
-
         .pass-label { color: var(--success); font-weight: 600; }
         .fail-label { color: var(--danger); font-weight: 600; }
 
-        /* Captura de Evidencias Fotográficas */
-        .photo-capture-zone {
-            margin-top: 10px;
-            border-top: 1px dashed var(--border);
+        .simplified-camera-zone {
+            margin-top: 12px;
             padding-top: 10px;
-        }
-
-        .camera-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .camera-preview-video {
-            width: 100%;
-            max-width: 400px;
-            height: auto;
-            background: #000;
-            border-radius: 6px;
-            display: none;
-        }
-
-        .photo-gallery {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .photo-thumb-container {
-            position: relative;
-            width: 80px;
-            height: 80px;
-        }
-
-        .photo-thumb {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 4px;
-            border: 1px solid var(--border);
-        }
-
-        .delete-photo-btn {
-            position: absolute;
-            top: -4px;
-            right: -4px;
-            background: var(--danger);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 10px;
-            cursor: pointer;
+            border-top: 1px dashed var(--border);
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
+            gap: 10px;
         }
 
-        /* Notificaciones Toast */
+        .camera-actions-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .camera-status-indicator {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .camera-status-indicator.captured { color: var(--success); }
+        .camera-status-indicator.skipped { color: #64748b; }
+
         #toast-container {
             position: fixed;
             bottom: 20px;
@@ -402,19 +320,12 @@
             margin-top: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             font-size: 13px;
-            animation: slideIn 0.2s ease-out;
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 15px;
         }
 
-        @keyframes slideIn {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        /* Badges de Estado */
         .badge {
             font-size: 11px;
             padding: 2px 8px;
@@ -425,13 +336,45 @@
         .badge-success { background-color: #dcfce7; color: #15803d; }
         .badge-danger { background-color: #fee2e2; color: #b91c1c; }
         .badge-accent { background-color: #e0f2fe; color: #0369a1; }
+        .badge-warning { background-color: #fef3c7; color: #d97706; }
 
-        /* Ajustes de Reportes Guardados */
-        .report-summary-card {
-            border-left: 4px solid var(--border);
-        }
+        .report-summary-card { border-left: 4px solid var(--border); }
         .report-summary-card.pass { border-left-color: var(--success); }
         .report-summary-card.fail { border-left-color: var(--danger); }
+
+        /* PAUSE MODAL SYSTEM STYLES */
+        .custom-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--primary);
+        }
+        .action-flex-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -439,28 +382,29 @@
     <header>
         <div class="logo-area">
             <h1>InspectFlow Pro</h1>
-            <span>Unidades DOAS, Leak Check y Final Inspection</span>
+            <span>DOAS Units, Leak Check & Final Inspection</span>
         </div>
         <div id="connection-indicator" class="connection-status online">
             <div class="status-dot"></div>
-            <span id="connection-text">Modo Local</span>
+            <span id="connection-text">Local Mode</span>
         </div>
     </header>
 
     <nav class="role-nav">
-        <button id="btn-nav-inspector" class="nav-btn active" onclick="switchView('inspector-view', this)">Ejecutar Inspección</button>
-        <button id="btn-nav-admin" class="nav-btn" onclick="switchView('admin-view', this)">Panel de Administración</button>
+        <button id="btn-nav-inspector" class="nav-btn active" onclick="switchView('inspector-view', this)">Execute Inspection</button>
+        <button id="btn-nav-admin" class="nav-btn" onclick="switchView('admin-view', this)">Admin Control Panel</button>
     </nav>
 
+    <!-- VIEW 1: INSPECTOR MODE -->
     <div id="inspector-view" class="view-panel active">
         <div class="grid-2">
             <div class="card">
-                <div class="card-title">Datos Base de la Unidad</div>
+                <div class="card-title">Unit Base Profile Data</div>
                 
                 <div class="form-group">
-                    <label for="ins-inspector">Inspector Encargado</label>
+                    <label for="ins-inspector">Assigned Inspector</label>
                     <select id="ins-inspector">
-                        <option value="">-- Seleccione un Inspector --</option>
+                        <option value="">-- Select Inspector --</option>
                         <option value="Alex Vazquez">Alex Vazquez (Leak Check)</option>
                         <option value="Andreina Yanez">Andreina Yanez (Final Inspection)</option>
                         <option value="Darrick Alvarez">Darrick Alvarez (Leak Check)</option>
@@ -471,111 +415,156 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="ins-template-select">Seleccionar Plantilla de Inspección</label>
+                    <label for="ins-template-select">Select Inspection Checklist Template</label>
                     <select id="ins-template-select" onchange="loadInspectionForm()">
-                        <option value="">-- No hay plantillas disponibles --</option>
+                        <option value="">-- No templates deployed --</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label for="ins-serial">Número de Serie de la Unidad</label>
-                    <input type="text" id="ins-serial" placeholder="Ej. DOAS-2026-XYZ123" required>
+                    <label for="ins-serial">Unit Serial Number</label>
+                    <input type="text" id="ins-serial" placeholder="e.g., DOAS-2026-XYZ123" required>
                 </div>
+
+                <button class="btn btn-secondary btn-block" style="margin-top: 5px;" onclick="openResumeModal()">
+                    🔄 Resume Paused Inspection
+                </button>
             </div>
 
             <div class="card">
-                <div class="card-title">Control de Progreso del Reporte</div>
+                <div class="card-title">Report Progress Metrics</div>
                 <div style="margin-bottom: 15px;">
-                    <p style="font-size: 14px; margin-bottom: 5px;">Estatus General de Criterios:</p>
+                    <p style="font-size: 14px; margin-bottom: 5px;">Criteria Status Tracker:</p>
                     <div style="display:flex; gap: 10px; font-weight: bold; font-size: 15px;">
-                        <span style="color: var(--success);" id="stat-pass-count">Cumplidos: 0</span>
-                        <span style="color: var(--danger);" id="stat-fail-count">No Cumplidos: 0</span>
+                        <span style="color: var(--success);" id="stat-pass-count">Passed: 0</span>
+                        <span style="color: var(--danger);" id="stat-fail-count">Failed: 0</span>
                     </div>
                 </div>
-                <button class="btn btn-success btn-block" onclick="saveCurrentInspection()">
-                    💾 Guardar Reporte e Inspección
-                </button>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button class="btn btn-success btn-block" onclick="saveCurrentInspection()">
+                        💾 Save Inspection Report
+                    </button>
+                    <button class="btn btn-warning btn-block" id="btn-global-pause" style="display:none;" onclick="openPauseModal()">
+                        ⏸️ Pause & Lock with PIN
+                    </button>
+                </div>
             </div>
         </div>
 
         <div class="card" id="dynamic-form-card" style="display: none;">
-            <div class="card-title" id="dynamic-form-title">Formulario de Control Operativo</div>
-            <div id="dynamic-fields-container">
-                </div>
+            <div class="card-title" id="dynamic-form-title">Operational Control Checklist Form</div>
+            <div id="dynamic-fields-container"></div>
         </div>
     </div>
 
+    <!-- VIEW 2: ADMIN PANEL -->
     <div id="admin-view" class="view-panel">
         <div class="grid-2">
             <div class="card">
-                <div class="card-title">Diseñador de Checklists / Plantillas</div>
+                <div class="card-title">Quality Template Designer</div>
                 
                 <div class="form-group">
-                    <label for="tmpl-name">Nombre de la Plantilla de Calidad</label>
-                    <input type="text" id="tmpl-name" placeholder="Ej. Inspección Final DOAS Línea 3">
+                    <label for="tmpl-name">Inspection Checklist Name</label>
+                    <input type="text" id="tmpl-name" placeholder="e.g., Final Mechanical Inspection DOAS">
                 </div>
 
                 <div class="form-group">
-                    <label for="tmpl-dept">Departamento Operativo</label>
+                    <label for="tmpl-dept">Target Operational Department</label>
                     <select id="tmpl-dept">
-                        <option value="Leak Check">Leak Check (Hermeticidad y Presión)</option>
-                        <option value="Final Inspection">Final Inspection (Mecánica y Eléctrica)</option>
+                        <option value="Leak Check">Leak Check</option>
+                        <option value="Final Inspection">Final Inspection</option>
                     </select>
                 </div>
 
                 <div style="margin-top: 15px; margin-bottom: 10px;">
-                    <label style="font-weight: 600;">Campos y Criterios de Control</label>
+                    <label style="font-weight: 600;">Control Criteria & Inspection Points</label>
                 </div>
 
                 <div id="builder-fields-container">
                     <div class="builder-row">
                         <div style="flex: 2;">
-                            <label>Pregunta / Punto de Control</label>
-                            <input type="text" class="field-question-input" placeholder="Ej. Verificar torque en pernos compresor">
+                            <label>Question / Control Point</label>
+                            <input type="text" class="field-question-input" placeholder="e.g., Check structural compressor bolt torque">
                         </div>
                         <div style="flex: 1;">
-                            <label>Sección</label>
-                            <input type="text" class="field-section-input" placeholder="Ej. Mecánica">
+                            <label>Section</label>
+                            <input type="text" class="field-section-input" placeholder="e.g., Mechanical Assembly">
                         </div>
                         <div style="flex: 1;">
-                            <label>Especificación / Alerta</label>
-                            <input type="text" class="field-spec-input" placeholder="Ej. 45 ft-lbs">
+                            <label>Spec / Tolerance Alert</label>
+                            <input type="text" class="field-spec-input" placeholder="e.g., 45 ft-lbs">
                         </div>
                         <button class="btn btn-danger btn-icon" style="margin-top: 25px;" onclick="this.parentElement.remove()">✕</button>
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button class="btn btn-secondary" onclick="addBuilderRow()">＋ Agregar Campo</button>
-                    <button class="btn" onclick="saveTemplate()">💾 Publicar Plantilla</button>
+                    <button class="btn btn-secondary" onclick="addBuilderRow()">＋ Add Criteria Field</button>
+                    <button class="btn" onclick="saveTemplate()">💾 Deploy Checklist Template</button>
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-title">Reportes Capturados en Taller</div>
+                <div class="card-title">Captured Factory Audit Reports</div>
                 <div style="margin-bottom: 15px; display: flex; gap: 10px;">
                     <button class="btn btn-success btn-block" onclick="exportAllToZip()">
-                        📦 Descargar Todos los Reportes (ZIP + Fotos)
+                        📦 Download Data Package (ZIP + Evidence Files)
                     </button>
                 </div>
-                <div class="items-list" id="saved-reports-list">
-                    </div>
+                <div class="items-list" id="saved-reports-list"></div>
             </div>
         </div>
 
         <div class="card">
-            <div class="card-title">Plantillas de Inspección Desplegadas</div>
-            <div class="items-list" id="admin-templates-list">
-                </div>
+            <div class="card-title">Deployed Operational Templates</div>
+            <div class="items-list" id="admin-templates-list"></div>
         </div>
     </div>
+
+    <!-- MODAL 1: SET PAUSE PIN -->
+    <div id="pause-modal" class="custom-modal">
+        <div class="modal-content">
+            <div class="modal-title">Pause Inspection Session</div>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">
+                Enter a 4-digit security PIN. You or any other inspector can resume this progress from any terminal using the unit's Serial Number and this PIN.
+            </p>
+            <div class="form-group">
+                <label for="pause-pin">Set 4-Digit PIN</label>
+                <input type="password" id="pause-pin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="e.g., 1234" style="text-align: center; font-size: 20px; letter-spacing: 5px;">
+            </div>
+            <div class="action-flex-group">
+                <button class="btn btn-secondary btn-block" onclick="closePauseModal()">Cancel</button>
+                <button class="btn btn-warning btn-block" onclick="executePauseAndLock()">Confirm & Lock</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: RESUME PIN AUTHENTICATION -->
+    <div id="resume-modal" class="custom-modal">
+        <div class="modal-content">
+            <div class="modal-title">Resume Paused Inspection</div>
+            <div class="form-group">
+                <label for="resume-serial">Unit Serial Number</label>
+                <input type="text" id="resume-serial" placeholder="e.g., DOAS-2026-XYZ123">
+            </div>
+            <div class="form-group">
+                <label for="resume-pin">Enter Security PIN</label>
+                <input type="password" id="resume-pin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="••••" style="text-align: center; font-size: 20px; letter-spacing: 5px;">
+            </div>
+            <div class="action-flex-group">
+                <button class="btn btn-secondary btn-block" onclick="closeResumeModal()">Cancel</button>
+                <button class="btn btn-success btn-block" onclick="executeResumeAuth()">Unlock & Load</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden global hardware utilities for isolated background capture tracking -->
+    <video id="hidden-bg-video" autoplay playsinline style="display:none;"></video>
+    <canvas id="hidden-bg-canvas" style="display:none;"></canvas>
 
     <div id="toast-container"></div>
 
     <script>
-        // ==========================================
-        // CONFIGURACIÓN DE FIREBASE (GLOBAL)
-        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyARtvNJxumAgUH2fmfciN1s-VlhtrvUS5k",
             authDomain: "leak-check-4-all.firebaseapp.com",
@@ -586,16 +575,15 @@
             appId: "1:49342777262:web:604860142847ea6dc3aa3f"
         };
 
-        // Inicializar Firebase usando el CDN de compatibilidad incorporado
         let remoteDB = null;
-        if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "TU_API_KEY") {
+        if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
             try {
                 firebase.initializeApp(firebaseConfig);
                 remoteDB = firebase.database();
                 document.getElementById('connection-indicator').className = "connection-status online";
-                document.getElementById('connection-text').innerText = "Sincronizado con Firebase RTDB";
+                document.getElementById('connection-text').innerText = "Connected to Firebase Cloud RTDB";
             } catch (e) {
-                console.error("Fallo de inicialización de Firebase. Operando en modo puramente local offline.", e);
+                console.error(e);
                 setupLocalOfflineStatus();
             }
         } else {
@@ -604,14 +592,15 @@
 
         function setupLocalOfflineStatus() {
             document.getElementById('connection-indicator').className = "connection-status offline";
-            document.getElementById('connection-text').innerText = "Modo Fuera de Línea (Local)";
+            document.getElementById('connection-text').innerText = "Offline Mode (Local Storage Only)";
         }
 
-        // Estructuras de Almacenamiento Local (Local Storage Backed)
         let localTemplatesCache = [];
         let localReportsCache = [];
+        let localPausedCache = {}; // Local storage fallbacks for paused tasks
+        let currentActivePhotos = {};
+        let globalCameraStream = null;
 
-        // Inicialización del Sistema al cargar la ventana
         window.onload = function() {
             loadLocalData();
             syncWithFirebase();
@@ -633,96 +622,78 @@
             setTimeout(() => { toast.remove(); }, 4000);
         }
 
-        // CORRECCIÓN SISTEMA DE NAVEGACIÓN (Independent Dynamic Switcher)
         function switchView(viewId, clickedButton) {
-            // Ocultar todos los páneles de contenido de forma absoluta
-            document.querySelectorAll('.view-panel').forEach(panel => {
-                panel.classList.remove('active');
-            });
+            document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
             
-            // Remover estado activo de toda la botonera de navegación
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Activar la vista y botón objetivos
             const targetPanel = document.getElementById(viewId);
-            if(targetPanel) {
-                targetPanel.classList.add('active');
-            }
-            
-            if(clickedButton) {
-                clickedButton.classList.add('active');
-            }
+            if(targetPanel) targetPanel.classList.add('active');
+            if(clickedButton) clickedButton.classList.add('active');
         }
 
-        // Cargar datos persistidos del LocalStorage
         function loadLocalData() {
             const tmpl = localStorage.getItem('inspectflow_templates');
             if (tmpl) localTemplatesCache = JSON.parse(tmpl);
-            
             const rep = localStorage.getItem('inspectflow_reports');
             if (rep) localReportsCache = JSON.parse(rep);
+            const paused = localStorage.getItem('inspectflow_paused');
+            if (paused) localPausedCache = JSON.parse(paused);
         }
 
-        // Sincronización bidireccional amortiguada con Firebase
         function syncWithFirebase() {
             if (!remoteDB) return;
-
-            // Escuchar cambios de plantillas en la nube
             remoteDB.ref('templates').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
-                    const cloudTemplates = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-                    localTemplatesCache = cloudTemplates;
+                    localTemplatesCache = Object.keys(data).map(key => ({ id: key, ...data[key] }));
                     localStorage.setItem('inspectflow_templates', JSON.stringify(localTemplatesCache));
                     renderTemplatesList();
                     updateFormTemplateDropdown();
                 }
             });
 
-            // Escuchar reportes de la nube para auditoría local
             remoteDB.ref('reports').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     const cloudReports = Object.keys(data).map(key => ({ id: key, ...data[key] }));
                     const localUnsaved = localReportsCache.filter(r => r.synced === false);
-                    
                     let unifiedReports = [...cloudReports];
                     localUnsaved.forEach(ur => {
-                        if(!unifiedReports.find(cr => cr.id === ur.id)) {
-                            unifiedReports.push(ur);
-                        }
+                        if(!unifiedReports.find(cr => cr.id === ur.id)) unifiedReports.push(ur);
                     });
-                    
                     localReportsCache = unifiedReports;
                     localStorage.setItem('inspectflow_reports', JSON.stringify(localReportsCache));
                     renderReportsList();
                 }
             });
+
+            // Keep track of real-time cloud updates for paused sessions
+            remoteDB.ref('paused_sessions').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    localPausedCache = data;
+                    localStorage.setItem('inspectflow_paused', JSON.stringify(localPausedCache));
+                }
+            });
         }
 
-        // ==========================================
-        // LÓGICA DEL CONSTRUCTOR DE PLANTILLAS (ADMIN)
-        // ==========================================
         function addBuilderRow() {
             const container = document.getElementById('builder-fields-container');
             if (!container) return;
-
             const row = document.createElement('div');
             row.className = 'builder-row';
             row.innerHTML = `
                 <div style="flex: 2;">
-                    <label>Pregunta / Punto de Control</label>
-                    <input type="text" class="field-question-input" placeholder="Ej. Punto de control">
+                    <label>Question / Control Point</label>
+                    <input type="text" class="field-question-input" placeholder="Field criteria label">
                 </div>
                 <div style="flex: 1;">
-                    <label>Sección</label>
-                    <input type="text" class="field-section-input" placeholder="Ej. General">
+                    <label>Section</label>
+                    <input type="text" class="field-section-input" placeholder="Section name">
                 </div>
                 <div style="flex: 1;">
-                    <label>Especificación / Alerta</label>
-                    <input type="text" class="field-spec-input" placeholder="Ej. Tolerancia">
+                    <label>Spec / Tolerance Alert</label>
+                    <input type="text" class="field-spec-input" placeholder="Specific spec thresholds">
                 </div>
                 <button class="btn btn-danger btn-icon" style="margin-top: 25px;" onclick="this.parentElement.remove()">✕</button>
             `;
@@ -735,72 +706,56 @@
             const rowElements = document.querySelectorAll('.builder-row');
 
             if (!name) {
-                showToast("El nombre de la plantilla es obligatorio", "danger");
+                showToast("Template checklist tracking name is mandatory", "danger");
                 return;
             }
 
             let fields = [];
             rowElements.forEach((row, index) => {
                 const question = row.querySelector('.field-question-input').value.trim();
-                const section = row.querySelector('.field-section-input').value.trim() || "General";
+                const section = row.querySelector('.field-section-input').value.trim() || "General Assembly Process";
                 const spec = row.querySelector('.field-spec-input').value.trim();
 
                 if (question) {
-                    fields.push({
-                        id: 'f_' + index + '_' + Date.now(),
-                        question: question,
-                        section: section,
-                        spec: spec
-                    });
+                    fields.push({ id: 'f_' + index + '_' + Date.now(), question: question, section: section, spec: spec });
                 }
             });
 
             if (fields.length === 0) {
-                showToast("Debe agregar al menos un criterio de validación válido", "danger");
+                showToast("You must configure at least one inspection verification line", "danger");
                 return;
             }
 
-            const newTemplate = {
-                id: 'tmpl_' + Date.now(),
-                name: name,
-                dept: dept,
-                fields: fields,
-                timestamp: Date.now()
-            };
-
-            // Guardar localmente
+            const newTemplate = { id: 'tmpl_' + Date.now(), name: name, dept: dept, fields: fields, timestamp: Date.now() };
             localTemplatesCache.push(newTemplate);
             localStorage.setItem('inspectflow_templates', JSON.stringify(localTemplatesCache));
 
-            // Subir a la nube si hay red
             if (remoteDB) {
                 remoteDB.ref('templates/' + newTemplate.id).set(newTemplate)
-                    .then(() => showToast("Plantilla desplegada a Firebase exitosamente", "success"))
-                    .catch(() => showToast("Guardado local. Se subirá al recuperar conexión estable", "warning"));
+                    .then(() => showToast("Inspection checklist successfully published to central cloud server", "success"))
+                    .catch(() => showToast("Saved to offline cache buffer", "warning"));
             } else {
-                showToast("Plantilla guardada localmente (Modo Offline)", "warning");
+                showToast("Checklist archived in local terminal memory (Offline Mode)", "warning");
             }
 
-            // Resetear Formulario Administrador
             document.getElementById('tmpl-name').value = '';
             document.getElementById('builder-fields-container').innerHTML = `
                 <div class="builder-row">
                     <div style="flex: 2;">
-                        <label>Pregunta / Punto de Control</label>
-                        <input type="text" class="field-question-input" placeholder="Ej. Verificar torque en pernos compresor">
+                        <label>Question / Control Point</label>
+                        <input type="text" class="field-question-input" placeholder="e.g., Check structural compressor bolt torque">
                     </div>
                     <div style="flex: 1;">
-                        <label>Sección</label>
-                        <input type="text" class="field-section-input" placeholder="Ej. Mecánica">
+                        <label>Section</label>
+                        <input type="text" class="field-section-input" placeholder="e.g., Mechanical Assembly">
                     </div>
                     <div style="flex: 1;">
-                        <label>Especificación / Alerta</label>
-                        <input type="text" class="field-spec-input" placeholder="Ej. 45 ft-lbs">
+                        <label>Spec / Tolerance Alert</label>
+                        <input type="text" class="field-spec-input" placeholder="e.g., 45 ft-lbs">
                     </div>
                     <button class="btn btn-danger btn-icon" style="margin-top: 25px;" onclick="this.parentElement.remove()">✕</button>
                 </div>
             `;
-
             renderTemplatesList();
             updateFormTemplateDropdown();
         }
@@ -809,10 +764,9 @@
             const list = document.getElementById('admin-templates-list');
             if (!list) return;
             if (localTemplatesCache.length === 0) {
-                list.innerHTML = '<div class="list-item"><p>No existen plantillas activas en el sistema.</p></div>';
+                list.innerHTML = '<div class="list-item"><p>No checklist structures registered on terminal.</p></div>';
                 return;
             }
-
             list.innerHTML = '';
             localTemplatesCache.forEach(t => {
                 const item = document.createElement('div');
@@ -820,24 +774,19 @@
                 item.innerHTML = `
                     <div class="item-info">
                         <h4>${t.name}</h4>
-                        <p>Dpto: <strong>${t.dept}</strong> | Criterios de Evaluación: ${t.fields.length}</p>
+                        <p>Dept Group: <strong>${t.dept}</strong> | Monitored Lines: ${t.fields.length}</p>
                     </div>
-                    <button class="btn btn-danger btn-icon" onclick="deleteTemplate('${t.id}')">Eliminar</button>
+                    <button class="btn btn-danger btn-icon" onclick="deleteTemplate('${t.id}')">Delete</button>
                 `;
                 list.appendChild(item);
             });
         }
 
         function deleteTemplate(id) {
-            if(!confirm("¿Está seguro de eliminar esta plantilla del sistema central?")) return;
-            
+            if(!confirm("Purge checklist blueprint infrastructure from main log?")) return;
             localTemplatesCache = localTemplatesCache.filter(t => t.id !== id);
             localStorage.setItem('inspectflow_templates', JSON.stringify(localTemplatesCache));
-            
-            if (remoteDB) {
-                remoteDB.ref('templates/' + id).remove()
-                    .then(() => showToast("Plantilla dada de baja en la nube", "success"));
-            }
+            if (remoteDB) remoteDB.ref('templates/' + id).remove().then(() => showToast("Blueprint purged from cloud system infrastructure", "success"));
             renderTemplatesList();
             updateFormTemplateDropdown();
         }
@@ -845,8 +794,7 @@
         function updateFormTemplateDropdown() {
             const select = document.getElementById('ins-template-select');
             if(!select) return;
-            select.innerHTML = '<option value="">-- Seleccione un Checklist Operativo --</option>';
-            
+            select.innerHTML = '<option value="">-- Select Active Verification Guide --</option>';
             localTemplatesCache.forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t.id;
@@ -855,18 +803,15 @@
             });
         }
 
-        // ==========================================
-        // MOTOR DINÁMICO DE INSPECCIÓN (INSPECTOR)
-        // ==========================================
-        let currentActivePhotos = {};
-
-        function loadInspectionForm() {
-            const templateId = document.getElementById('ins-template-select').value;
+        function loadInspectionForm(preloadedState = null) {
+            const templateId = preloadedState ? preloadedState.templateId : document.getElementById('ins-template-select').value;
             const container = document.getElementById('dynamic-fields-container');
             const formCard = document.getElementById('dynamic-form-card');
+            const pauseBtn = document.getElementById('btn-global-pause');
             
             if (!templateId) {
                 formCard.style.display = 'none';
+                pauseBtn.style.display = 'none';
                 return;
             }
 
@@ -874,9 +819,16 @@
             if (!template) return;
 
             formCard.style.display = 'block';
-            document.getElementById('dynamic-form-title').innerText = `Ejecutando: ${template.name}`;
+            pauseBtn.style.display = 'block';
+            document.getElementById('dynamic-form-title').innerText = `Active Checklist Execution Protocol: ${template.name}`;
             container.innerHTML = '';
-            currentActivePhotos = {};
+            
+            if (preloadedState) {
+                currentActivePhotos = preloadedState.photos || {};
+            } else {
+                currentActivePhotos = {};
+            }
+            releaseGlobalCamera();
 
             let sections = {};
             template.fields.forEach(f => {
@@ -895,7 +847,29 @@
                     block.className = 'inspection-field-block';
                     block.id = `block_${field.id}`;
                     
-                    let specHtml = field.spec ? `<span class="field-spec">⚠️ ESPECIFICACIÓN: ${field.spec}</span>` : '';
+                    let specHtml = field.spec ? `<span class="field-spec">⚠️ ENGINEERING SPEC LIMIT: ${field.spec}</span>` : '';
+                    
+                    // Recover previous structural values if resuming state logs
+                    let passChecked = '';
+                    let failChecked = '';
+                    let savedComment = '';
+                    let photoLabel = 'No Photo Attached';
+                    let photoClass = '';
+                    let takeBtnText = 'Take Picture';
+                    let takeBtnClass = 'btn btn-secondary btn-icon';
+
+                    if (preloadedState && preloadedState.answers[field.id]) {
+                        if (preloadedState.answers[field.id].status === 'PASS') passChecked = 'checked';
+                        if (preloadedState.answers[field.id].status === 'FAIL') failChecked = 'checked';
+                        savedComment = preloadedState.answers[field.id].comment || '';
+                    }
+
+                    if (currentActivePhotos[field.id] && currentActivePhotos[field.id].length > 0) {
+                        photoLabel = '🟢 Photo Captured';
+                        photoClass = 'captured';
+                        takeBtnText = 'Re-take Picture';
+                        takeBtnClass = 'btn btn-danger btn-icon';
+                    }
                     
                     block.innerHTML = `
                         <div class="field-header">
@@ -905,37 +879,97 @@
                             </div>
                             <div class="radio-options">
                                 <label class="radio-label pass-label">
-                                    <input type="radio" name="status_${field.id}" value="PASS" onchange="evaluateFormCounters()"> PASS
+                                    <input type="radio" name="status_${field.id}" value="PASS" ${passChecked} onchange="evaluateFormCounters()"> PASS
                                 </label>
                                 <label class="radio-label fail-label">
-                                    <input type="radio" name="status_${field.id}" value="FAIL" onchange="evaluateFormCounters()"> FAIL
+                                    <input type="radio" name="status_${field.id}" value="FAIL" ${failChecked} onchange="evaluateFormCounters()"> FAIL
                                 </label>
                             </div>
                         </div>
                         <div class="form-group">
-                            <input type="text" id="comment_${field.id}" placeholder="Notas aclaratorias, mediciones de presión, micrones o anomalías encontradas...">
+                            <input type="text" id="comment_${field.id}" value="${savedComment}" placeholder="Enter specific measurement readings, torque feedback or anomaly notes...">
                         </div>
                         
-                        <div class="photo-capture-zone">
-                            <div class="camera-controls">
-                                <button class="btn btn-secondary btn-icon" onclick="openCameraDevice('${field.id}')">📷 Activar Cámara</button>
-                                <button class="btn btn-success btn-icon" id="snap_btn_${field.id}" style="display:none;" onclick="capturePhotoFrame('${field.id}')">📸 Capturar Evidencia</button>
+                        <div class="simplified-camera-zone">
+                            <div class="camera-status-indicator ${photoClass}" id="cam_status_${field.id}">
+                                <span>${photoLabel}</span>
                             </div>
-                            <video id="video_${field.id}" class="camera-preview-video" autoplay playsinline></video>
-                            <canvas id="canvas_${field.id}" style="display:none;"></canvas>
-                            <div class="photo-gallery" id="gallery_${field.id}"></div>
+                            <div class="camera-actions-group">
+                                <button class="btn btn-secondary btn-icon" id="btn_take_${field.id}" class="${takeBtnClass}" onclick="triggerHardwareCapture('${field.id}')">${takeBtnText}</button>
+                                <button class="btn btn-secondary btn-icon" id="btn_skip_${field.id}" onclick="skipHardwareEvidence('${field.id}')">Skip Picture</button>
+                            </div>
                         </div>
                     `;
                     container.appendChild(block);
                 });
             }
             evaluateFormCounters();
+            initializeGlobalCameraStream();
+        }
+
+        function initializeGlobalCameraStream() {
+            if (globalCameraStream) return;
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
+                .then(stream => {
+                    globalCameraStream = stream;
+                    document.getElementById('hidden-bg-video').srcObject = stream;
+                })
+                .catch(err => {
+                    console.error("Camera interface initialization failed:", err);
+                    showToast("Hardware subsystem blocked. Check native device security profile permissions.", "danger");
+                });
+        }
+
+        function releaseGlobalCamera() {
+            if (globalCameraStream) {
+                globalCameraStream.getTracks().forEach(track => track.stop());
+                globalCameraStream = null;
+            }
+        }
+
+        function triggerHardwareCapture(fieldId) {
+            const video = document.getElementById('hidden-bg-video');
+            const canvas = document.getElementById('hidden-bg-canvas');
+            const statusLabel = document.getElementById(`cam_status_${fieldId}`);
+            const takeBtn = document.getElementById(`btn_take_${fieldId}`);
+
+            if (!globalCameraStream) {
+                showToast("Hardware stack offline. Attempting safe reconnection restart...", "warning");
+                initializeGlobalCameraStream();
+                return;
+            }
+
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            currentActivePhotos[fieldId] = [dataUrl]; 
+
+            statusLabel.className = "camera-status-indicator captured";
+            statusLabel.innerHTML = `<span>🟢 Photo Captured</span>`;
+            takeBtn.innerText = "Re-take Picture";
+            takeBtn.className = "btn btn-danger btn-icon";
+            showToast("Evidence snapshot locked successfully", "success");
+        }
+
+        function skipHardwareEvidence(fieldId) {
+            const statusLabel = document.getElementById('cam_status_' + fieldId);
+            const takeBtn = document.getElementById('btn_take_' + fieldId);
+            
+            delete currentActivePhotos[fieldId];
+            
+            statusLabel.className = "camera-status-indicator skipped";
+            statusLabel.innerHTML = `<span>⚪ Skipped</span>`;
+            takeBtn.innerText = "Take Picture";
+            takeBtn.className = "btn btn-secondary btn-icon";
+            showToast("Evidence parameter marked as bypassed", "info");
         }
 
         function evaluateFormCounters() {
             const templateId = document.getElementById('ins-template-select').value;
             if(!templateId) return;
-
             const template = localTemplatesCache.find(t => t.id === templateId);
             let pass = 0, fail = 0;
 
@@ -947,114 +981,172 @@
                 });
             });
 
-            document.getElementById('stat-pass-count').innerText = `Cumplidos: ${pass}`;
-            document.getElementById('stat-fail-count').innerText = `No Cumplidos: ${fail}`;
+            document.getElementById('stat-pass-count').innerText = `Passed: ${pass}`;
+            document.getElementById('stat-fail-count').innerText = `Failed: ${fail}`;
         }
 
-        // ==========================================
-        // CONTROLADORES DE ACCESO HARDWARE (CÁMARA)
-        // ==========================================
-        let activeStreams = {};
+        // ====================================================
+        // PAUSE & RESUME TRANSFER PROTOCOLS Engine
+        // ====================================================
+        function openPauseModal() {
+            const serial = document.getElementById('ins-serial').value.trim();
+            if (!serial) {
+                showToast("A Unit Serial Number is required to hold structural states.", "danger");
+                return;
+            }
+            document.getElementById('pause-pin').value = '';
+            document.getElementById('pause-modal').style.display = 'flex';
+        }
 
-        function openCameraDevice(fieldId) {
-            const video = document.getElementById(`video_${fieldId}`);
-            const snapBtn = document.getElementById(`snap_btn_${fieldId}`);
+        function closePauseModal() {
+            document.getElementById('pause-modal').style.display = 'none';
+        }
 
-            if (activeStreams[fieldId]) {
-                stopCameraStream(fieldId);
+        function executePauseAndLock() {
+            const pin = document.getElementById('pause-pin').value.trim();
+            const serial = document.getElementById('ins-serial').value.trim();
+            const templateId = document.getElementById('ins-template-select').value;
+            const inspector = document.getElementById('ins-inspector').value;
+
+            if (pin.length !== 4 || isNaN(pin)) {
+                showToast("Security PIN validation abort: Exactly 4 digits required.", "danger");
                 return;
             }
 
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
-                .then(stream => {
-                    activeStreams[fieldId] = stream;
-                    video.srcObject = stream;
-                    video.style.display = 'block';
-                    snapBtn.style.display = 'inline-flex';
-                    event.target.innerText = "🛑 Desactivar Cámara";
-                })
-                .catch(err => {
-                    console.error("Fallo de acceso a cámara física", err);
-                    showToast("No se pudo iniciar la cámara. Verifique los permisos de su navegador.", "danger");
-                });
-        }
+            const template = localTemplatesCache.find(t => t.id === templateId);
+            let collectedAnswers = {};
 
-        function stopCameraStream(fieldId) {
-            if (activeStreams[fieldId]) {
-                activeStreams[fieldId].getTracks().forEach(track => track.stop());
-                delete activeStreams[fieldId];
-                
-                document.getElementById(`video_${fieldId}`).style.display = 'none';
-                document.getElementById(`snap_btn_${fieldId}`).style.display = 'none';
-                
-                const zone = document.getElementById(`block_${fieldId}`);
-                const actBtn = zone.querySelector('.camera-controls button');
-                if(actBtn) actBtn.innerText = "📷 Activar Cámara";
-            }
-        }
+            template.fields.forEach(f => {
+                const radios = document.getElementsByName(`status_${f.id}`);
+                let selectedVal = null;
+                radios.forEach(r => { if(r.checked) selectedVal = r.value; });
+                const comment = document.getElementById(`comment_${f.id}`).value.trim();
 
-        function capturePhotoFrame(fieldId) {
-            const video = document.getElementById(`video_${fieldId}`);
-            const canvas = document.getElementById(`canvas_${fieldId}`);
-
-            if (!activeStreams[fieldId]) return;
-
-            const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-
-            if (!currentActivePhotos[fieldId]) currentActivePhotos[fieldId] = [];
-            currentActivePhotos[fieldId].push(dataUrl);
-
-            renderPhotoGallery(fieldId);
-            showToast("Evidencia fotográfica indexada temporalmente", "success");
-        }
-
-        function renderPhotoGallery(fieldId) {
-            const gallery = document.getElementById(`gallery_${fieldId}`);
-            gallery.innerHTML = '';
-
-            if (!currentActivePhotos[fieldId]) return;
-
-            currentActivePhotos[fieldId].forEach((imgData, index) => {
-                const container = document.createElement('div');
-                container.className = 'photo-thumb-container';
-                container.innerHTML = `
-                    <img src="${imgData}" class="photo-thumb">
-                    <button class="delete-photo-btn" onclick="removePhotoFromStack('${fieldId}', ${index})">✕</button>
-                `;
-                gallery.appendChild(container);
+                collectedAnswers[f.id] = { status: selectedVal, comment: comment };
             });
+
+            const pauseSessionPackage = {
+                serial: serial,
+                templateId: templateId,
+                inspector: inspector,
+                pin: pin,
+                answers: collectedAnswers,
+                photos: currentActivePhotos,
+                timestamp: Date.now()
+            };
+
+            // Save state package into local and cloud spaces
+            localPausedCache[serial.toUpperCase()] = pauseSessionPackage;
+            localStorage.setItem('inspectflow_paused', JSON.stringify(localPausedCache));
+
+            if (remoteDB) {
+                remoteDB.ref('paused_sessions/' + serial.toUpperCase()).set(pauseSessionPackage)
+                    .then(() => showToast("State uploaded. Session locked to Cloud registry.", "success"))
+                    .catch(() => showToast("Session locked locally inside current terminal.", "warning"));
+            } else {
+                showToast("Session locked locally inside current terminal (Offline Mode).", "warning");
+            }
+
+            // Wipe workbench cleanly
+            document.getElementById('ins-serial').value = '';
+            document.getElementById('ins-template-select').value = '';
+            document.getElementById('dynamic-form-card').style.display = 'none';
+            document.getElementById('btn-global-pause').style.display = 'none';
+            document.getElementById('dynamic-fields-container').innerHTML = '';
+            currentActivePhotos = {};
+            evaluateFormCounters();
+            releaseGlobalCamera();
+            closePauseModal();
         }
 
-        function removePhotoFromStack(fieldId, index) {
-            if (currentActivePhotos[fieldId]) {
-                currentActivePhotos[fieldId].splice(index, 1);
-                renderPhotoGallery(fieldId);
+        function openResumeModal() {
+            document.getElementById('resume-serial').value = '';
+            document.getElementById('resume-pin').value = '';
+            document.getElementById('resume-modal').style.display = 'flex';
+        }
+
+        function closeResumeModal() {
+            document.getElementById('resume-modal').style.display = 'none';
+        }
+
+        function executeResumeAuth() {
+            const targetSerial = document.getElementById('resume-serial').value.trim().toUpperCase();
+            const enteredPin = document.getElementById('resume-pin').value.trim();
+
+            if (!targetSerial || !enteredPin) {
+                showToast("Please provide both Serial Identifier and Security PIN.", "danger");
+                return;
+            }
+
+            // Internal helper closure to load data onto workbench if checked
+            const loadSession = (sessionData) => {
+                if (sessionData.pin !== enteredPin) {
+                    showToast("Authentication Failed: Invalid PIN entry.", "danger");
+                    return;
+                }
+
+                document.getElementById('ins-serial').value = sessionData.serial;
+                document.getElementById('ins-template-select').value = sessionData.templateId;
+                document.getElementById('ins-inspector').value = sessionData.inspector || '';
+
+                loadInspectionForm(sessionData);
+                
+                // Purge active key once claimed to avoid duplicate entries
+                delete localPausedCache[targetSerial];
+                localStorage.setItem('inspectflow_paused', JSON.stringify(localPausedCache));
+                if (remoteDB) remoteDB.ref('paused_sessions/' + targetSerial).remove();
+
+                showToast("Authentication Success! Progress restored to workbench.", "success");
+                closeResumeModal();
+            };
+
+            // Double check live DB if online to allow multi-device handoffs
+            if (remoteDB) {
+                remoteDB.ref('paused_sessions/' + targetSerial).once('value')
+                    .then((snapshot) => {
+                        const cloudSession = snapshot.val();
+                        if (cloudSession) {
+                            loadSession(cloudSession);
+                        } else if (localPausedCache[targetSerial]) {
+                            loadSession(localPausedCache[targetSerial]);
+                        } else {
+                            showToast("No suspended data found matching this Serial Number.", "danger");
+                        }
+                    })
+                    .catch(() => {
+                        if (localPausedCache[targetSerial]) {
+                            loadSession(localPausedCache[targetSerial]);
+                        } else {
+                            showToast("Error establishing network query pipeline.", "danger");
+                        }
+                    });
+            } else {
+                if (localPausedCache[targetSerial]) {
+                    loadSession(localPausedCache[targetSerial]);
+                } else {
+                    showToast("No matched session structural data inside offline cache registry.", "danger");
+                }
             }
         }
 
-        // ==========================================
-        // GUARDAR REPORTES DE INSPECCIÓN
-        // ==========================================
+        // ====================================================
+        // CONSOLIDATION & EXTRACTION MODULES Engine
+        // ====================================================
         function saveCurrentInspection() {
             const inspector = document.getElementById('ins-inspector').value;
             const templateId = document.getElementById('ins-template-select').value;
             const serial = document.getElementById('ins-serial').value.trim();
 
             if (!inspector || !templateId || !serial) {
-                showToast("Debe rellenar Inspector, Checklist y Serie de Unidad", "danger");
+                showToast("Please ensure Inspector Profile, Checklist Selection, and Serial inputs are filled", "danger");
                 return;
             }
 
             const template = localTemplatesCache.find(t => t.id === templateId);
             let evaluationResults = [];
             let globalUnitStatus = "PASS";
-
             let formsValid = true;
+
             template.fields.forEach(f => {
                 const radios = document.getElementsByName(`status_${f.id}`);
                 let selectedVal = null;
@@ -1081,7 +1173,7 @@
             });
 
             if (!formsValid) {
-                showToast("Por seguridad de auditoría, responda todos los puntos del checklist", "danger");
+                showToast("Audit validation protocol aborted: Please review and sign off all checklist items", "danger");
                 return;
             }
 
@@ -1099,15 +1191,12 @@
                 synced: false
             };
 
-            template.fields.forEach(f => stopCameraStream(f.id));
-
             localReportsCache.push(finalizedReport);
             localStorage.setItem('inspectflow_reports', JSON.stringify(localReportsCache));
 
             if (remoteDB) {
                 const cloudCopy = JSON.parse(JSON.stringify(finalizedReport));
                 cloudCopy.synced = true;
-
                 remoteDB.ref('reports/' + reportId).set(cloudCopy)
                     .then(() => {
                         const idx = localReportsCache.findIndex(r => r.id === reportId);
@@ -1115,51 +1204,49 @@
                             localReportsCache[idx].synced = true;
                             localStorage.setItem('inspectflow_reports', JSON.stringify(localReportsCache));
                         }
-                        showToast("Reporte guardado y sincronizado a la central de Firebase", "success");
+                        showToast("Inspection execution logged and synced to cloud hub", "success");
                         renderReportsList();
                     })
-                    .catch((err) => {
-                        console.error(err);
-                        showToast("Reporte salvaguardado localmente. Pendiente de sincronización automática", "warning");
+                    .catch(() => {
+                        showToast("Report cached safely to unit terminal buffer memory", "warning");
                         renderReportsList();
                     });
             } else {
-                showToast("Reporte guardado en memoria local del dispositivo", "warning");
+                showToast("Audit report generated and compiled locally inside standalone system", "warning");
                 renderReportsList();
             }
 
             document.getElementById('ins-serial').value = '';
             document.getElementById('ins-template-select').value = '';
             document.getElementById('dynamic-form-card').style.display = 'none';
+            document.getElementById('btn-global-pause').style.display = 'none';
             document.getElementById('dynamic-fields-container').innerHTML = '';
             currentActivePhotos = {};
             evaluateFormCounters();
+            releaseGlobalCamera();
         }
 
         function renderReportsList() {
             const list = document.getElementById('saved-reports-list');
             if (!list) return;
             if (localReportsCache.length === 0) {
-                list.innerHTML = '<div class="list-item"><p>No se registran auditorías ejecutadas el día de hoy.</p></div>';
+                list.innerHTML = '<div class="list-item"><p>No factory reports stored inside database logs.</p></div>';
                 return;
             }
-
             list.innerHTML = '';
             const sorted = [...localReportsCache].sort((a,b) => b.timestamp - a.timestamp);
-            
             sorted.forEach(r => {
                 const item = document.createElement('div');
                 const badgeClass = r.status === 'PASS' ? 'badge-success' : 'badge-danger';
                 const cardClass = r.status === 'PASS' ? 'pass' : 'fail';
-                const syncBadge = r.synced ? '<span class="badge badge-accent">Nube</span>' : '<span class="badge badge-warning">Local</span>';
-                
+                const syncBadge = r.synced ? '<span class="badge badge-accent">Cloud</span>' : '<span class="badge badge-warning">Local</span>';
                 const dateStr = new Date(r.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
                 item.className = `list-item report-summary-card ${cardClass}`;
                 item.innerHTML = `
                     <div class="item-info">
-                        <h4>Serie: ${r.serial}</h4>
-                        <p>${dateStr} | Insp: <strong>${r.inspector}</strong> | Dpto: ${r.department}</p>
+                        <h4>Unit SN: ${r.serial}</h4>
+                        <p>${dateStr} | Operator: <strong>${r.inspector}</strong> | Dept: ${r.department}</p>
                     </div>
                     <div class="actions-cell">
                         <span class="badge ${badgeClass}">${r.status}</span>
@@ -1172,37 +1259,27 @@
         }
 
         function deleteReport(id) {
-            if(!confirm("¿Desea purgar este reporte del historial visible?")) return;
+            if(!confirm("Purge audit report history completely from local database?")) return;
             localReportsCache = localReportsCache.filter(r => r.id !== id);
             localStorage.setItem('inspectflow_reports', JSON.stringify(localReportsCache));
-            
-            if (remoteDB) {
-                remoteDB.ref('reports/' + id).remove()
-                    .then(() => showToast("Reporte borrado de base de datos centralizada", "success"));
-            }
+            if (remoteDB) remoteDB.ref('reports/' + id).remove().then(() => showToast("Record removed from remote system logs", "success"));
             renderReportsList();
         }
 
-        // ==========================================
-        // EXPORTACIÓN EXCEL-COMPATIBLE Y ZIP AVANZADO
-        // ==========================================
         function exportAllToZip() {
             if (localReportsCache.length === 0) {
-                showToast("No existen reportes para exportar en este momento", "danger");
+                showToast("No active data entries discovered to structure data payload", "danger");
                 return;
             }
-
             const zip = new JSZip();
-            
             let csvContent = "\uFEFF";
-            csvContent += "ID Reporte,Número de Serie,Inspector,Departamento,Plantilla,Resultado Unidad,Fecha,ID Criterio,Punto de Control,Sección Proceso,Evaluación Criterio,Comentarios de Inspector,Evidencias Adjuntas\n";
+            csvContent += "Report ID,Unit Serial Number,Inspector,Department,Template Baseline,Unit Evaluation Result,Timestamp,Criteria ID,Control Checklist Line,Process Section,Line Status,Inspector Remarks,Attached Image Context\n";
 
             localReportsCache.forEach(r => {
                 const dateStr = new Date(r.timestamp).toLocaleString();
-                
                 r.results.forEach(res => {
                     const cleanComment = (res.comment || "").replace(/"/g, '""');
-                    const hasPhotos = res.photos && res.photos.length > 0 ? `${res.photos.length} Foto(s)` : "Sin Foto";
+                    const hasPhotos = res.photos && res.photos.length > 0 ? `${res.photos.length} Photo(s)` : "No Photo Attached";
                     
                     csvContent += `"${r.id}","${r.serial}","${r.inspector}","${r.department}","${r.templateName}","${r.status}","${dateStr}","${res.fieldId}","${res.question}","${res.section}","${res.status}","${cleanComment}","${hasPhotos}"\n`;
                     
@@ -1211,30 +1288,25 @@
                             const byteString = atob(base64Data.split(',')[1]);
                             const ab = new ArrayBuffer(byteString.length);
                             const ia = new Uint8Array(ab);
-                            for (let i = 0; i < byteString.length; i++) {
-                                ia[i] = byteString.charCodeAt(i);
-                            }
+                            for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
                             const blob = new Blob([ab], { type: 'image/jpeg' });
-                            
                             const cleanSection = res.section.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-                            const photoPath = `EVIDENCIAS_FOTOGRAFICAS/UNIDAD_${r.serial}/${cleanSection}_criterio_${pIdx + 1}.jpg`;
-                            zip.file(photoPath, blob);
+                            zip.file(`QUALITY_EVIDENCE_PACK/UNIT_SN_${r.serial}/${cleanSection}_criteria_evidence_${pIdx + 1}.jpg`, blob);
                         });
                     }
                 });
             });
 
-            zip.file("AUDITORIA_CONSOLIDADA_CALIDAD.csv", csvContent);
-
-            showToast("Procesando compresión binaria de evidencias... Espere", "info");
+            zip.file("CONSOLIDATED_QUALITY_LOG_AUDIT.csv", csvContent);
+            showToast("Assembling media files and binary arrays... Please stand by", "info");
             zip.generateAsync({ type: "blob" }).then(function(content) {
                 const link = document.createElement("a");
                 link.href = URL.createObjectURL(content);
-                link.download = `REPORTE_CALIDAD_ADDISON_HVAC_${Date.now()}.zip`;
+                link.download = `FACTORY_QUALITY_DATA_ADDISON_HVAC_${Date.now()}.zip`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                showToast("¡Paquete ZIP descargado exitosamente!", "success");
+                showToast("ZIP master packet downloaded successfully", "success");
             });
         }
     </script>
