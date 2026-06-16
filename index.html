@@ -82,40 +82,49 @@
             background-color: currentColor;
         }
 
+        /* CORRECCIÓN DE LA BARRA DE NAVEGACIÓN Y VISIBILIDAD DE BOTONES */
         .role-nav {
             display: flex;
             background-color: var(--primary-light);
             padding: 0 10px;
+            border-bottom: 1px solid var(--primary);
         }
 
         .nav-btn {
             background: none;
             border: none;
-            color: #94a3b8;
-            padding: 12px 20px;
+            color: #cbd5e1; /* Texto claro de alta visibilidad por defecto */
+            padding: 14px 24px;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
-            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+            border-bottom: 4px solid transparent;
+            display: inline-block;
         }
 
-        .nav-btn:hover { color: white; }
+        .nav-btn:hover { 
+            color: white; 
+            background-color: rgba(255,255,255,0.08);
+        }
 
         .nav-btn.active {
-            color: white;
-            border-bottom-color: var(--accent);
-            background-color: rgba(255,255,255,0.05);
+            color: white !important;
+            border-bottom-color: var(--accent) !important;
+            background-color: rgba(255,255,255,0.12);
         }
 
+        /* MANEJO DE VISTAS */
         .view-panel {
-            display: none;
+            display: none !important; /* Forzado por defecto para evitar colisiones */
             padding: 20px;
             max-width: 1200px;
             margin: 0 auto;
         }
 
-        .view-panel.active { display: block; }
+        .view-panel.active { 
+            display: block !important; 
+        }
 
         .grid-2 {
             display: grid;
@@ -298,7 +307,6 @@
             display: block;
         }
 
-        /* CORRECCIÓN VISUAL: Asegura que la foto ocupe buen espacio y se vea claramente */
         .photo-preview-container {
             display: none;
             width: 100%;
@@ -695,13 +703,30 @@
             setTimeout(() => { toast.remove(); }, 4000);
         }
 
+        // FUNCIÓN CORREGIDA Y ROBUSTA PARA INTERCAMBIO DE PESTAÑAS
         function switchView(viewId, clickedButton) {
-            document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            // 1. Ocultar todos los paneles de vista por la fuerza
+            const panels = document.querySelectorAll('.view-panel');
+            panels.forEach(panel => {
+                panel.classList.remove('active');
+            });
             
+            // 2. Remover estado activo de todos los botones de la barra
+            const buttons = document.querySelectorAll('.nav-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 3. Activar el panel seleccionado de inmediato
             const targetPanel = document.getElementById(viewId);
-            if(targetPanel) targetPanel.classList.add('active');
-            if(clickedButton) clickedButton.classList.add('active');
+            if (targetPanel) {
+                targetPanel.classList.add('active');
+            }
+            
+            // 4. Activar visualmente el botón cliqueado
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
         }
 
         function loadLocalData() {
@@ -872,4 +897,588 @@
             const list = document.getElementById('admin-templates-list');
             if (!list) return;
             if (localTemplatesCache.length === 0) {
-                list.innerHTML =
+                list.innerHTML = '<div class="list-item"><p>No hay estructuras de checklist registradas.</p></div>';
+                return;
+            }
+            list.innerHTML = '';
+            localTemplatesCache.forEach(t => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
+                    <div class="item-info">
+                        <h4>${t.name}</h4>
+                        <p>Depto: <strong>${t.dept}</strong> | Puntos de Control: ${t.fields.length}</p>
+                    </div>
+                    <button class="btn btn-danger btn-icon" onclick="deleteTemplate('${t.id}')">Eliminar</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function deleteTemplate(id) {
+            if(!confirm("¿Eliminar de forma permanente esta plantilla?")) return;
+            localTemplatesCache = localTemplatesCache.filter(t => t.id !== id);
+            localStorage.setItem('inspectflow_templates', JSON.stringify(localTemplatesCache));
+            if (remoteDB) remoteDB.ref('templates/' + id).remove().then(() => showToast("Plantilla removida del sistema", "success"));
+            renderTemplatesList();
+            updateFormTemplateDropdown();
+        }
+
+        function updateFormTemplateDropdown() {
+            const select = document.getElementById('ins-template-select');
+            if(!select) return;
+            select.innerHTML = '<option value="">-- Seleccionar Guía de Verificación --</option>';
+            localTemplatesCache.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.innerText = `[${t.dept}] - ${t.name}`;
+                select.appendChild(opt);
+            });
+        }
+
+        function loadInspectionForm(preloadedState = null) {
+            const templateId = preloadedState ? preloadedState.templateId : document.getElementById('ins-template-select').value;
+            const container = document.getElementById('dynamic-fields-container');
+            const formCard = document.getElementById('dynamic-form-card');
+            const pauseBtn = document.getElementById('btn-global-pause');
+            
+            if (!templateId) {
+                formCard.style.display = 'none';
+                pauseBtn.style.display = 'none';
+                return;
+            }
+
+            const template = localTemplatesCache.find(t => t.id === templateId);
+            if (!template) return;
+
+            formCard.style.display = 'block';
+            pauseBtn.style.display = 'block';
+            document.getElementById('dynamic-form-title').innerText = `Protocolo Activo: ${template.name}`;
+            container.innerHTML = '';
+            
+            if (preloadedState) {
+                currentActivePhotos = preloadedState.photos || {};
+            } else {
+                currentActivePhotos = {};
+                localStorage.removeItem('inspectflow_crash_buffer'); 
+            }
+            abortHardwareStreaming();
+
+            let sections = {};
+            template.fields.forEach(f => {
+                if (!sections[f.section]) sections[f.section] = [];
+                sections[f.section].push(f);
+            });
+
+            for (let secName in sections) {
+                const secTitle = document.createElement('div');
+                secTitle.className = 'inspection-section-title';
+                secTitle.innerText = secName.toUpperCase();
+                container.appendChild(secTitle);
+
+                sections[secName].forEach(field => {
+                    const block = document.createElement('div');
+                    block.className = 'inspection-field-block';
+                    block.id = `block_${field.id}`;
+                    
+                    let specHtml = field.spec ? `<span class="field-spec">⚠️ ESPECIFICACIÓN DE INGENIERÍA: ${field.spec}</span>` : '';
+                    
+                    let savedComment = '';
+                    let photoLabel = 'Sin Fotografía Adjunta';
+                    let photoClass = '';
+                    let takeBtnText = 'Tomar Foto';
+                    let takeBtnClass = 'btn btn-secondary btn-icon';
+                    let previewDisplayStyle = 'none';
+                    let previewSrc = '';
+
+                    if (preloadedState && preloadedState.answers[field.id]) {
+                        savedComment = preloadedState.answers[field.id].comment || '';
+                    }
+
+                    if (currentActivePhotos[field.id]) {
+                        photoLabel = `🟢 Foto Capturada:<br><span class="photo-filename-label">${currentActivePhotos[field.id].filename}</span>`;
+                        photoClass = 'captured';
+                        takeBtnText = 'Volver a Tomar';
+                        takeBtnClass = 'btn btn-danger btn-icon';
+                        previewDisplayStyle = 'block';
+                        previewSrc = currentActivePhotos[field.id].blobData;
+                    }
+                    
+                    block.innerHTML = `
+                        <div class="field-header">
+                            <div>
+                                <div class="field-question">${field.question}</div>
+                                ${specHtml}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="comment_${field.id}" value="${savedComment}" oninput="autoSaveActiveFormState()" placeholder="Escriba comentarios, mediciones o anomalías aquí...">
+                        </div>
+                        
+                        <div class="simplified-camera-zone">
+                            <div class="camera-controls-row">
+                                <div class="camera-status-indicator ${photoClass}" id="cam_status_${field.id}">
+                                    <span>${photoLabel}</span>
+                                </div>
+                                <div class="camera-actions-group">
+                                    <button class="${takeBtnClass}" id="btn_take_${field.id}" onclick="openHardwareViewfinder('${field.id}')">${takeBtnText}</button>
+                                    <button class="btn btn-secondary btn-icon" id="btn_skip_${field.id}" onclick="skipHardwareEvidence('${field.id}')">Saltar Foto</button>
+                                </div>
+                            </div>
+                            
+                            <div class="photo-preview-container" id="preview_container_${field.id}" style="display: ${previewDisplayStyle};">
+                                <img id="img_preview_${field.id}" src="${previewSrc}" alt="Vista previa de inspección">
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(block);
+                });
+            }
+        }
+
+        async function openHardwareViewfinder(fieldId) {
+            const serial = document.getElementById('ins-serial').value.trim();
+            const inspector = document.getElementById('ins-inspector').value;
+
+            if (!serial || !inspector) {
+                showToast("El Serial de la Unidad y el Inspector son obligatorios antes de tomar fotos.", "danger");
+                return;
+            }
+
+            activeFieldTargetId = fieldId;
+            const overlay = document.getElementById('hardware-viewfinder-modal');
+            const video = document.getElementById('active-lens-video');
+            const previewBox = document.getElementById('filename-preview-box');
+            
+            const cleanInspector = inspector.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const today = new Date();
+            const dateStr = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear()}`;
+            const computedFilename = `${serial}${cleanInspector}${dateStr}.jpg`;
+
+            previewBox.innerText = `Nombre de archivo asignado: ${computedFilename}`;
+            overlay.style.display = 'flex';
+
+            try {
+                if (globalCameraStream) {
+                    globalCameraStream.getTracks().forEach(t => t.stop());
+                }
+
+                globalCameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: "environment",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                });
+
+                video.srcObject = globalCameraStream;
+                await video.play();
+
+            } catch (err) {
+                console.error("Fallo de cámara:", err);
+                showToast("No se pudo iniciar la cámara. Verifique los permisos del dispositivo.", "danger");
+                abortHardwareStreaming();
+            }
+        }
+
+        function executeShutterSnapshot() {
+            if (!activeFieldTargetId || !globalCameraStream) return;
+
+            const video = document.getElementById('active-lens-video');
+            const canvas = document.getElementById('hidden-bg-canvas');
+            
+            const statusLabel = document.getElementById(`cam_status_${activeFieldTargetId}`);
+            const takeBtn = document.getElementById(`btn_take_${activeFieldTargetId}`);
+            const previewContainer = document.getElementById(`preview_container_${activeFieldTargetId}`);
+            const previewImg = document.getElementById(`img_preview_${activeFieldTargetId}`);
+            
+            const serial = document.getElementById('ins-serial').value.trim();
+            const inspector = document.getElementById('ins-inspector').value;
+
+            try {
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+                
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+                const cleanInspector = inspector.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const today = new Date();
+                const dateStr = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear()}`;
+                const finalName = `${serial}${cleanInspector}${dateStr}.jpg`;
+
+                currentActivePhotos[activeFieldTargetId] = {
+                    filename: finalName,
+                    blobData: dataUrl
+                };
+
+                autoSaveActiveFormState();
+
+                statusLabel.className = "camera-status-indicator captured";
+                statusLabel.innerHTML = `<span>🟢 Foto Capturada:<br><span class="photo-filename-label">${finalName}</span></span>`;
+                takeBtn.innerText = "Volver a Tomar";
+                takeBtn.className = "btn btn-danger btn-icon";
+                
+                previewImg.src = dataUrl;
+                previewContainer.style.display = 'block'; 
+                
+                abortHardwareStreaming();
+
+            } catch (err) {
+                console.error("Error al procesar snapshot:", err);
+                showToast("Error interno del buffer de imagen.", "danger");
+            }
+        }
+
+        function abortHardwareStreaming() {
+            const overlay = document.getElementById('hardware-viewfinder-modal');
+            const video = document.getElementById('active-lens-video');
+            
+            overlay.style.display = 'none';
+            video.srcObject = null;
+
+            if (globalCameraStream) {
+                globalCameraStream.getTracks().forEach(track => track.stop());
+                globalCameraStream = null;
+            }
+            activeFieldTargetId = null;
+        }
+
+        function skipHardwareEvidence(fieldId) {
+            const statusLabel = document.getElementById('cam_status_' + fieldId);
+            const takeBtn = document.getElementById('btn_take_' + fieldId);
+            const previewContainer = document.getElementById('preview_container_' + fieldId);
+            const previewImg = document.getElementById('img_preview_' + fieldId);
+            
+            delete currentActivePhotos[fieldId];
+            autoSaveActiveFormState();
+            
+            statusLabel.className = "camera-status-indicator";
+            statusLabel.innerHTML = `<span>⚪ Omitida</span>`;
+            takeBtn.innerText = "Tomar Foto";
+            takeBtn.className = "btn btn-secondary btn-icon";
+            
+            previewImg.src = "";
+            previewContainer.style.display = 'none';
+        }
+
+        function openPauseModal() {
+            const serial = document.getElementById('ins-serial').value.trim();
+            if (!serial) {
+                showToast("Se requiere el número de Orden de Trabajo para congelar la sesión.", "danger");
+                return;
+            }
+            document.getElementById('pause-pin').value = '';
+            document.getElementById('pause-modal').style.display = 'flex';
+        }
+
+        function closePauseModal() {
+            document.getElementById('pause-modal').style.display = 'none';
+        }
+
+        function executePauseAndLock() {
+            const pin = document.getElementById('pause-pin').value.trim();
+            const serial = document.getElementById('ins-serial').value.trim();
+            const templateId = document.getElementById('ins-template-select').value;
+            const inspector = document.getElementById('ins-inspector').value;
+            const inspectorEnd = document.getElementById('ins-inspector-end').value;
+
+            if (pin.length !== 4 || isNaN(pin)) {
+                showToast("El PIN de seguridad debe ser exactamente de 4 dígitos numéricos.", "danger");
+                return;
+            }
+
+            const template = localTemplatesCache.find(t => t.id === templateId);
+            let collectedAnswers = {};
+
+            template.fields.forEach(f => {
+                const comment = document.getElementById(`comment_${f.id}`).value.trim();
+                collectedAnswers[f.id] = { comment: comment };
+            });
+
+            const pauseSessionPackage = {
+                serial: serial,
+                templateId: templateId,
+                inspector: inspector,
+                inspectorEnd: inspectorEnd,
+                pin: pin,
+                answers: collectedAnswers,
+                photos: currentActivePhotos,
+                timestamp: Date.now()
+            };
+
+            localPausedCache[serial.toUpperCase()] = pauseSessionPackage;
+            localStorage.setItem('inspectflow_paused', JSON.stringify(localPausedCache));
+
+            if (remoteDB) {
+                const cloudPauseCopy = JSON.parse(JSON.stringify(pauseSessionPackage));
+                for(let fid in cloudPauseCopy.photos) {
+                    cloudPauseCopy.photos[fid].blobData = "[Almacenado de Forma Local en Terminal]";
+                }
+                remoteDB.ref('paused_sessions/' + serial.toUpperCase()).set(cloudPauseCopy)
+                    .then(() => showToast("Sesión guardada y bloqueada en la nube.", "success"))
+                    .catch(() => showToast("Sesión bloqueada localmente en esta terminal.", "warning"));
+            } else {
+                showToast("Sesión bloqueada localmente en esta terminal.", "warning");
+            }
+
+            localStorage.removeItem('inspectflow_crash_buffer');
+            resetInspectionScreen();
+            closePauseModal();
+        }
+
+        function openResumeModal() {
+            document.getElementById('resume-serial').value = '';
+            document.getElementById('resume-pin').value = '';
+            document.getElementById('resume-modal').style.display = 'flex';
+        }
+
+        function closeResumeModal() {
+            document.getElementById('resume-modal').style.display = 'none';
+        }
+
+        function executeResumeAuth() {
+            const targetSerial = document.getElementById('resume-serial').value.trim().toUpperCase();
+            const enteredPin = document.getElementById('resume-pin').value.trim();
+
+            if (!targetSerial || !enteredPin) {
+                showToast("Por favor complete el Serial de la Orden y el PIN.", "danger");
+                return;
+            }
+
+            const loadSession = (sessionData) => {
+                if (sessionData.pin !== enteredPin) {
+                    showToast("Autenticación Fallida: PIN Inválido.", "danger");
+                    return;
+                }
+
+                document.getElementById('ins-serial').value = sessionData.serial;
+                document.getElementById('ins-template-select').value = sessionData.templateId;
+                document.getElementById('ins-inspector').value = sessionData.inspector || '';
+                document.getElementById('ins-inspector-end').value = sessionData.inspectorEnd || '';
+
+                if(localPausedCache[targetSerial] && localPausedCache[targetSerial].photos) {
+                    sessionData.photos = localPausedCache[targetSerial].photos;
+                }
+
+                loadInspectionForm(sessionData);
+                
+                delete localPausedCache[targetSerial];
+                localStorage.setItem('inspectflow_paused', JSON.stringify(localPausedCache));
+                if (remoteDB) remoteDB.ref('paused_sessions/' + targetSerial).remove();
+
+                autoSaveActiveFormState(); 
+                showToast("Progreso restaurado correctamente.", "success");
+                closeResumeModal();
+            };
+
+            if (remoteDB) {
+                remoteDB.ref('paused_sessions/' + targetSerial).once('value')
+                    .then((snapshot) => {
+                        const cloudSession = snapshot.val();
+                        if (cloudSession) {
+                            loadSession(cloudSession);
+                        } else if (localPausedCache[targetSerial]) {
+                            loadSession(localPausedCache[targetSerial]);
+                        } else {
+                            showToast("No se encontraron datos pausados para esta Orden.", "danger");
+                        }
+                    })
+                    .catch(() => {
+                        if (localPausedCache[targetSerial]) {
+                            loadSession(localPausedCache[targetSerial]);
+                        } else {
+                            showToast("Error de conexión al consultar la base de datos.", "danger");
+                        }
+                    });
+            } else {
+                if (localPausedCache[targetSerial]) {
+                    loadSession(localPausedCache[targetSerial]);
+                } else {
+                    showToast("No hay registros en la memoria caché offline.", "danger");
+                }
+            }
+        }
+
+        function saveCurrentInspection() {
+            const inspector = document.getElementById('ins-inspector').value;
+            const inspectorEnd = document.getElementById('ins-inspector-end').value;
+            const templateId = document.getElementById('ins-template-select').value;
+            const serial = document.getElementById('ins-serial').value.trim();
+
+            if (!inspector || !inspectorEnd || !templateId || !serial) {
+                showToast("Asegúrese de rellenar Inspector Inicial, de Cierre, Plantilla y Serial.", "danger");
+                return;
+            }
+
+            const template = localTemplatesCache.find(t => t.id === templateId);
+            let evaluationResults = [];
+
+            template.fields.forEach(f => {
+                const comment = document.getElementById(`comment_${f.id}`).value.trim();
+                const hasPhotoAttached = currentActivePhotos[f.id] ? true : false;
+                const assignedFilename = currentActivePhotos[f.id] ? currentActivePhotos[f.id].filename : "N/A";
+
+                evaluationResults.push({
+                    fieldId: f.id,
+                    question: f.question,
+                    section: f.section,
+                    comment: comment,
+                    photoAttached: hasPhotoAttached,
+                    photoName: assignedFilename
+                });
+            });
+
+            const reportId = 'rep_' + Date.now();
+            const finalizedReport = {
+                id: reportId,
+                serial: serial,
+                inspectorStart: inspector,
+                inspectorEnd: inspectorEnd,
+                templateId: templateId,
+                templateName: template.name,
+                department: template.dept,
+                results: evaluationResults,
+                timestamp: Date.now(),
+                synced: false,
+                localBinaryPhotos: currentActivePhotos 
+            };
+
+            localReportsCache.push(finalizedReport);
+            localStorage.setItem('inspectflow_reports', JSON.stringify(localReportsCache));
+
+            if (remoteDB) {
+                const cloudCopy = JSON.parse(JSON.stringify(finalizedReport));
+                cloudCopy.synced = true;
+                if (cloudCopy.localBinaryPhotos) delete cloudCopy.localBinaryPhotos; 
+
+                remoteDB.ref('reports/' + reportId).set(cloudCopy)
+                    .then(() => {
+                        const idx = localReportsCache.findIndex(r => r.id === reportId);
+                        if (idx !== -1) {
+                            localReportsCache[idx].synced = true;
+                            localStorage.setItem('inspectflow_reports', JSON.stringify(localReportsCache));
+                        }
+                        showToast("Reporte e historial sincronizados correctamente con la nube.", "success");
+                        renderReportsList();
+                    })
+                    .catch(() => {
+                        showToast("Reporte guardado localmente en la memoria del terminal.", "warning");
+                        renderReportsList();
+                    });
+            } else {
+                showToast("Reporte de auditoría generado y guardado localmente.", "warning");
+                renderReportsList();
+            }
+
+            localStorage.removeItem('inspectflow_crash_buffer');
+            resetInspectionScreen();
+        }
+
+        function resetInspectionScreen() {
+            document.getElementById('ins-serial').value = '';
+            document.getElementById('ins-template-select').value = '';
+            document.getElementById('dynamic-form-card').style.display = 'none';
+            document.getElementById('btn-global-pause').style.display = 'none';
+            document.getElementById('dynamic-fields-container').innerHTML = '';
+            currentActivePhotos = {};
+            abortHardwareStreaming();
+        }
+
+        function renderReportsList() {
+            const list = document.getElementById('saved-reports-list');
+            if (!list) return;
+            if (localReportsCache.length === 0) {
+                list.innerHTML = '<div class="list-item"><p>No hay reportes de fábrica almacenados en este dispositivo.</p></div>';
+                return;
+            }
+            list.innerHTML = '';
+            const sorted = [...localReportsCache].sort((a,b) => b.timestamp - a.timestamp);
+            sorted.forEach(r => {
+                const item = document.createElement('div');
+                const syncBadge = r.synced ? '<span class="badge badge-accent">En la Nube</span>' : '<span class="badge badge-warning">Local</span>';
+                const dateStr = new Date(r.timestamp).toLocaleDateString() + ' ' + new Date(r.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const totalPhotos = r.localBinaryPhotos ? Object.keys(r.localBinaryPhotos).length : 0;
+
+                item.className = `list-item`;
+                item.innerHTML = `
+                    <div class="item-info">
+                        <h4>Orden de Trabajo: ${r.serial}</h4>
+                        <p>${dateStr} | Cierre: <strong>${r.inspectorEnd}</strong></p>
+                        <p style="font-size:12px; color:var(--accent);">Imágenes locales adjuntas: ${totalPhotos}</p>
+                    </div>
+                    <div class="actions-cell" style="display:flex; align-items:center; gap:8px;">
+                        ${syncBadge}
+                        <button class="btn btn-danger" style="padding:4px 8px; font-size:11px;" onclick="deleteReport('${r.id}')">✕</button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function deleteReport(id) {
+            if(!confirm("¿Desea purgar este reporte y sus imágenes locales permanentemente?")) return;
+            localReportsCache = localReportsCache.filter(r => r.id !== id);
+            localStorage.setItem('inspectflow_reports', JSON.stringify(localReportsCache));
+            if (remoteDB) remoteDB.ref('reports/' + id).remove().then(() => showToast("Registro eliminado de la base de datos.", "success"));
+            renderReportsList();
+        }
+
+        function exportAllToZip() {
+            if (localReportsCache.length === 0) {
+                showToast("No existen entradas de datos para empaquetar el ZIP.", "danger");
+                return;
+            }
+            const zip = new JSZip();
+            let csvContent = "\uFEFF";
+            csvContent += "ID Reporte,Serial Orden de Trabajo,Inspector Inicial,Inspector Cierre,Departamento,Plantilla Base,Marca de Tiempo,Punto de Control,Sección,Comentarios,Nombre Archivo Imagen\n";
+
+            localReportsCache.forEach(r => {
+                const dateStr = new Date(r.timestamp).toLocaleString();
+                const cleanInspectorFolder = r.inspectorEnd.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const folderName = `${r.serial}_${cleanInspectorFolder}`;
+
+                r.results.forEach(res => {
+                    const cleanComment = (res.comment || "").replace(/"/g, '""');
+                    csvContent += `"${r.id}","${r.serial}","${r.inspectorStart}","${r.inspectorEnd}","${r.department}","${r.templateName}","${dateStr}","${res.question}","${res.section}","${cleanComment}","${res.photoName}"\n`;
+                });
+
+                if (r.localBinaryPhotos && Object.keys(r.localBinaryPhotos).length > 0) {
+                    for (let fid in r.localBinaryPhotos) {
+                        const imgObj = r.localBinaryPhotos[fid];
+                        if (imgObj && imgObj.blobData && imgObj.blobData.includes(',')) {
+                            try {
+                                const byteString = atob(imgObj.blobData.split(',')[1]);
+                                const ab = new ArrayBuffer(byteString.length);
+                                const ia = new Uint8Array(ab);
+                                for (let i = 0; i < byteString.length; i++) {
+                                    ia[i] = byteString.charCodeAt(i);
+                                }
+                                const blob = new Blob([ab], { type: 'image/jpeg' });
+                                zip.file(`${folderName}/${imgObj.filename}`, blob);
+                            } catch (e) {
+                                console.error("Error al empaquetar imagen binaria:", e);
+                            }
+                        }
+                    }
+                }
+            });
+
+            zip.file("CONSOLIDATED_QUALITY_LOG_AUDIT.csv", csvContent);
+            showToast("Compilando carpetas de imágenes y bases CSV... Espere un momento.", "info");
+            
+            zip.generateAsync({ type: "blob" }).then(function(content) {
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(content);
+                link.download = `PAQUETE_DATOS_CALIDAD_ADDISON_${Date.now()}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast("¡Paquete maestro ZIP descargado con éxito!", "success");
+            });
+        }
+    </script>
+</body>
+</html>
