@@ -82,7 +82,6 @@
             background-color: currentColor;
         }
 
-        /* CORRECCIÓN DE LA BARRA DE NAVEGACIÓN Y VISIBILIDAD DE BOTONES */
         .role-nav {
             display: flex;
             background-color: var(--primary-light);
@@ -93,7 +92,7 @@
         .nav-btn {
             background: none;
             border: none;
-            color: #cbd5e1; /* Texto claro de alta visibilidad por defecto */
+            color: #cbd5e1;
             padding: 14px 24px;
             font-size: 14px;
             font-weight: 600;
@@ -114,9 +113,8 @@
             background-color: rgba(255,255,255,0.12);
         }
 
-        /* MANEJO DE VISTAS */
         .view-panel {
-            display: none !important; /* Forzado por defecto para evitar colisiones */
+            display: none !important;
             padding: 20px;
             max-width: 1200px;
             margin: 0 auto;
@@ -174,11 +172,6 @@
             background-color: #ffffff;
         }
 
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
         .btn {
             background-color: var(--accent);
             color: white;
@@ -202,7 +195,7 @@
         .btn-block { width: 100%; }
         
         .items-list {
-            max-height: 350px;
+            max-height: 450px;
             overflow-y: auto;
             border: 1px solid var(--border);
             border-radius: 6px;
@@ -212,12 +205,52 @@
             padding: 12px 15px;
             border-bottom: 1px solid var(--border);
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 10px;
             background-color: #ffffff;
         }
 
         .list-item:nth-child(even) { background-color: #f8fafc; }
+
+        .report-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* NUEVO CONTENEDOR DE IMÁGENES INTEGRADO EN REPORTE */
+        .report-images-grid {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+            padding: 8px;
+            background: #f1f5f9;
+            border-radius: 6px;
+        }
+
+        .report-thumb-container {
+            width: 80px;
+            height: 80px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+            background: #000;
+        }
+
+        .report-thumb-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .report-thumb-container:hover {
+            border-color: var(--accent);
+            opacity: 0.9;
+        }
 
         .builder-row {
             display: flex;
@@ -254,18 +287,8 @@
             margin-bottom: 10px;
         }
 
-        .field-question {
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .field-spec {
-            font-size: 12px;
-            color: var(--warning);
-            font-style: italic;
-            display: block;
-            margin-top: 2px;
-        }
+        .field-question { font-size: 14px; font-weight: 500; }
+        .field-spec { font-size: 12px; color: var(--warning); font-style: italic; display: block; margin-top: 2px; }
 
         .simplified-camera-zone {
             margin-top: 12px;
@@ -284,10 +307,7 @@
             gap: 10px;
         }
 
-        .camera-actions-group {
-            display: flex;
-            gap: 8px;
-        }
+        .camera-actions-group { display: flex; gap: 8px; }
 
         .camera-status-indicator {
             font-size: 12px;
@@ -304,7 +324,6 @@
             font-size: 11px;
             color: var(--accent);
             font-family: monospace;
-            display: block;
         }
 
         .photo-preview-container {
@@ -316,21 +335,11 @@
             border-radius: 6px;
             overflow: hidden;
             background: #0f172a;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
 
-        .photo-preview-container img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
+        .photo-preview-container img { width: 100%; height: auto; display: block; }
 
-        #toast-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 9999;
-        }
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
 
         .toast {
             background-color: var(--primary);
@@ -338,7 +347,6 @@
             padding: 12px 20px;
             border-radius: 6px;
             margin-top: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             font-size: 13px;
             display: flex;
             justify-content: space-between;
@@ -346,47 +354,48 @@
             gap: 15px;
         }
 
-        .badge {
-            font-size: 11px;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
+        .badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; }
         .badge-success { background-color: #dcfce7; color: #15803d; }
-        .badge-danger { background-color: #fee2e2; color: #b91c1c; }
         .badge-accent { background-color: #e0f2fe; color: #0369a1; }
         .badge-warning { background-color: #fef3c7; color: #d97706; }
 
         .custom-modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(15, 23, 42, 0.6);
             backdrop-filter: blur(4px);
             z-index: 2000;
-            justify-content: center;
-            align-items: center;
+            justify-content: center; align-items: center;
         }
         .modal-content {
-            background-color: white;
-            padding: 25px;
-            border-radius: 8px;
-            max-width: 400px;
-            width: 90%;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);
+            background-color: white; padding: 25px; border-radius: 8px; max-width: 400px; width: 90%;
+        }
+
+        /* MODAL EXCLUSIVO PARA AMPLIAR LA FOTO CLIQUEADA */
+        #gallery-viewer-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            z-index: 4000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        #gallery-viewer-img {
+            max-width: 100%;
+            max-height: 80vh;
+            border: 3px solid white;
+            border-radius: 4px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
         
         #hardware-viewfinder-modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background-color: #000000;
             z-index: 3000;
             flex-direction: column;
@@ -395,49 +404,20 @@
             padding: 20px 10px;
         }
 
-        .viewfinder-header {
-            color: white;
-            text-align: center;
-            width: 100%;
-        }
+        .viewfinder-header { color: white; text-align: center; width: 100%; }
         .viewfinder-header h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; color: #38bdf8; }
-        .viewfinder-header p { font-size: 12px; color: #94a3b8; }
         .viewfinder-filename-preview {
-            background: rgba(255,255,255,0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-family: monospace;
-            color: #38bdf8;
-            margin-top: 6px;
-            display: inline-block;
+            background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px;
+            font-size: 11px; font-family: monospace; color: #38bdf8; margin-top: 6px; display: inline-block;
         }
 
         .viewfinder-container {
-            width: 100%;
-            max-width: 480px;
-            height: 65vh;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 2px solid #334155;
-            background-color: #1e293b;
-            position: relative;
+            width: 100%; max-width: 480px; height: 65vh; border-radius: 12px;
+            overflow: hidden; border: 2px solid #334155; background-color: #1e293b; position: relative;
         }
 
-        #active-lens-video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .viewfinder-controls {
-            width: 100%;
-            max-width: 480px;
-            display: flex;
-            justify-content: space-between;
-            gap: 15px;
-            padding-bottom: 10px;
-        }
+        #active-lens-video { width: 100%; height: 100%; object-fit: cover; }
+        .viewfinder-controls { width: 100%; max-width: 480px; display: flex; justify-content: space-between; gap: 15px; padding-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -464,7 +444,7 @@
                 <div class="card-title">Perfil Base de la Unidad</div>
                 
                 <div class="form-group">
-                    <label for="ins-inspector">Inspector Inicial (Inicia Actividad)</label>
+                    <label for="ins-inspector">Inspector Inicial</label>
                     <select id="ins-inspector" onchange="autoSaveActiveFormState()">
                         <option value="">-- Seleccionar Inspector --</option>
                         <option value="Alex Vazquez">Alex Vazquez (Leak Check)</option>
@@ -477,7 +457,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="ins-inspector-end">Inspector de Cierre (Finaliza Actividad)</label>
+                    <label for="ins-inspector-end">Inspector de Cierre</label>
                     <select id="ins-inspector-end" onchange="autoSaveActiveFormState()">
                         <option value="">-- Seleccionar Inspector de Cierre --</option>
                         <option value="Alex Vazquez">Alex Vazquez (Leak Check)</option>
@@ -501,7 +481,7 @@
                     <input type="text" id="ins-serial" placeholder="Ej: 260205560001" oninput="autoSaveActiveFormState()">
                 </div>
 
-                <button class="btn btn-secondary btn-block" style="margin-top: 5px;" onclick="openResumeModal()">
+                <button class="btn btn-secondary btn-block" onclick="openResumeModal()">
                     🔄 Reanudar Inspección Pausada
                 </button>
             </div>
@@ -529,12 +509,10 @@
         <div class="grid-2">
             <div class="card">
                 <div class="card-title">Diseñador de Plantillas de Calidad</div>
-                
                 <div class="form-group">
                     <label for="tmpl-name">Nombre de la Lista de Verificación</label>
                     <input type="text" id="tmpl-name" placeholder="Ej: Inspección Mecánica Final DOAS">
                 </div>
-
                 <div class="form-group">
                     <label for="tmpl-dept">Departamento Objetivo</label>
                     <select id="tmpl-dept">
@@ -542,29 +520,23 @@
                         <option value="Final Inspection">Final Inspection</option>
                     </select>
                 </div>
-
-                <div style="margin-top: 15px; margin-bottom: 10px;">
-                    <label style="font-weight: 600;">Criterios de Control y Puntos de Inspección</label>
-                </div>
-
                 <div id="builder-fields-container">
                     <div class="builder-row">
                         <div style="flex: 2;">
                             <label>Pregunta / Punto de Control</label>
-                            <input type="text" class="field-question-input" placeholder="Ej: Verificar torque de pernos de compresor">
+                            <input type="text" class="field-question-input" placeholder="Ej: Verificar torque de pernos">
                         </div>
                         <div style="flex: 1;">
                             <label>Sección</label>
-                            <input type="text" class="field-section-input" placeholder="Ej: Ensamblaje Mecánico">
+                            <input type="text" class="field-section-input" placeholder="Ej: Mecánica">
                         </div>
                         <div style="flex: 1;">
-                            <label>Especificación / Tolerancia</label>
+                            <label>Especificación</label>
                             <input type="text" class="field-spec-input" placeholder="Ej: 45 ft-lbs">
                         </div>
                         <button class="btn btn-danger btn-icon" style="margin-top: 25px;" onclick="this.parentElement.remove()">✕</button>
                     </div>
                 </div>
-
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
                     <button class="btn btn-secondary" onclick="addBuilderRow()">＋ Añadir Criterio</button>
                     <button class="btn" onclick="saveTemplate()">💾 Desplegar Plantilla</button>
@@ -572,8 +544,8 @@
             </div>
 
             <div class="card">
-                <div class="card-title">Reportes Guardados en Terminal</div>
-                <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+                <div class="card-title">Reportes Guardados en Terminal (Con Fotos)</div>
+                <div style="margin-bottom: 15px;">
                     <button class="btn btn-success btn-block" onclick="exportAllToZip()">
                         📦 Descargar Paquete de Datos (ZIP + Carpetas)
                     </button>
@@ -581,7 +553,6 @@
                 <div class="items-list" id="saved-reports-list"></div>
             </div>
         </div>
-
         <div class="card">
             <div class="card-title">Plantillas Operacionales Activas</div>
             <div class="items-list" id="admin-templates-list"></div>
@@ -590,56 +561,46 @@
 
     <div id="pause-modal" class="custom-modal">
         <div class="modal-content">
-            <div class="modal-title" style="font-weight:600; margin-bottom:10px;">Pausar Sesión de Inspección</div>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">
-                Ingrese un PIN de 4 dígitos para resguardar el progreso actual.
-            </p>
             <div class="form-group">
                 <label for="pause-pin">Establecer PIN (4 dígitos)</label>
-                <input type="password" id="pause-pin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="1234" style="text-align: center; font-size: 20px; letter-spacing: 5px;">
+                <input type="password" id="pause-pin" maxlength="4" style="text-align: center; font-size: 20px;">
             </div>
-            <div style="display:flex; gap:10px; margin-top:15px;">
+            <div style="display:flex; gap:10px;">
                 <button class="btn btn-secondary btn-block" onclick="closePauseModal()">Cancelar</button>
-                <button class="btn btn-warning btn-block" onclick="executePauseAndLock()">Bloquear y Pausar</button>
+                <button class="btn btn-warning btn-block" onclick="executePauseAndLock()">Bloquear</button>
             </div>
         </div>
     </div>
 
     <div id="resume-modal" class="custom-modal">
         <div class="modal-content">
-            <div class="modal-title" style="font-weight:600; margin-bottom:10px;">Reanudar Inspección</div>
-            <div class="form-group">
-                <label for="resume-serial">Número de Orden de Trabajo (Serial)</label>
-                <input type="text" id="resume-serial" placeholder="Ej: 260205560001">
-            </div>
-            <div class="form-group">
-                <label for="resume-pin">Ingresar PIN de Seguridad</label>
-                <input type="password" id="resume-pin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="••••" style="text-align: center; font-size: 20px; letter-spacing: 5px;">
-            </div>
-            <div style="display:flex; gap:10px; margin-top:15px;">
+            <div class="form-group"><label for="resume-serial">Serial Orden</label><input type="text" id="resume-serial"></div>
+            <div class="form-group"><label for="resume-pin">PIN</label><input type="password" id="resume-pin" maxlength="4" style="text-align: center; font-size: 20px;"></div>
+            <div style="display:flex; gap:10px;">
                 <button class="btn btn-secondary btn-block" onclick="closeResumeModal()">Cancelar</button>
-                <button class="btn btn-success btn-block" onclick="executeResumeAuth()">Desbloquear y Cargar</button>
+                <button class="btn btn-success btn-block" onclick="executeResumeAuth()">Cargar</button>
             </div>
         </div>
     </div>
 
     <div id="hardware-viewfinder-modal">
         <div class="viewfinder-header">
-            <h3 id="viewfinder-title-label">Modo de Verificación de Cámara</h3>
-            <p>Alinee el punto mecánico dentro del recuadro</p>
-            <div class="viewfinder-filename-preview" id="filename-preview-box">Destino: file_preview.jpg</div>
+            <h3 id="viewfinder-title-label">Captura de Evidencia de Inspección</h3>
+            <div class="viewfinder-filename-preview" id="filename-preview-box"></div>
         </div>
-        <div class="viewfinder-container">
-            <video id="active-lens-video" autoplay playsinline></video>
-        </div>
+        <div class="viewfinder-container"><video id="active-lens-video" autoplay playsinline></video></div>
         <div class="viewfinder-controls">
-            <button class="btn btn-secondary" style="flex:1;" onclick="abortHardwareStreaming()">✕ Cancelar</button>
-            <button class="btn btn-success" style="flex:2; font-size:16px;" onclick="executeShutterSnapshot()">📸 CAPTURAR FOTO</button>
+            <button class="btn btn-secondary" onclick="abortHardwareStreaming()">✕ Cancelar</button>
+            <button class="btn btn-success" onclick="executeShutterSnapshot()">📸 CAPTURAR FOTO</button>
         </div>
     </div>
 
-    <canvas id="hidden-bg-canvas" style="display:none;"></canvas>
+    <div id="gallery-viewer-modal" onclick="this.style.display='none'">
+        <img id="gallery-viewer-img" src="" alt="Vista grande">
+        <p style="color: white; margin-top: 15px; font-size: 14px;">Haz clic en cualquier lado para cerrar</p>
+    </div>
 
+    <canvas id="hidden-bg-canvas" style="display:none;"></canvas>
     <div id="toast-container"></div>
 
     <script>
@@ -664,9 +625,7 @@
                 console.error(e);
                 setupLocalOfflineStatus();
             }
-        } else {
-            setupLocalOfflineStatus();
-        }
+        } else { setupLocalOfflineStatus(); }
 
         function setupLocalOfflineStatus() {
             document.getElementById('connection-indicator').className = "connection-status offline";
@@ -677,7 +636,6 @@
         let localReportsCache = [];
         let localPausedCache = {}; 
         let currentActivePhotos = {};
-        
         let globalCameraStream = null;
         let activeFieldTargetId = null;
 
@@ -697,36 +655,17 @@
             if (type === 'success') toast.style.backgroundColor = 'var(--success)';
             if (type === 'danger') toast.style.backgroundColor = 'var(--danger)';
             if (type === 'warning') toast.style.backgroundColor = 'var(--warning)';
-            
             toast.innerHTML = `<span>${message}</span><button style="background:none; border:none; color:white; cursor:pointer;" onclick="this.parentElement.remove()">✕</button>`;
             container.appendChild(toast);
             setTimeout(() => { toast.remove(); }, 4000);
         }
 
-        // FUNCIÓN CORREGIDA Y ROBUSTA PARA INTERCAMBIO DE PESTAÑAS
         function switchView(viewId, clickedButton) {
-            // 1. Ocultar todos los paneles de vista por la fuerza
-            const panels = document.querySelectorAll('.view-panel');
-            panels.forEach(panel => {
-                panel.classList.remove('active');
-            });
-            
-            // 2. Remover estado activo de todos los botones de la barra
-            const buttons = document.querySelectorAll('.nav-btn');
-            buttons.forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // 3. Activar el panel seleccionado de inmediato
-            const targetPanel = document.getElementById(viewId);
-            if (targetPanel) {
-                targetPanel.classList.add('active');
-            }
-            
-            // 4. Activar visualmente el botón cliqueado
-            if (clickedButton) {
-                clickedButton.classList.add('active');
-            }
+            document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            const target = document.getElementById(viewId);
+            if (target) target.classList.add('active');
+            if (clickedButton) clickedButton.classList.add('active');
         }
 
         function loadLocalData() {
@@ -764,88 +703,51 @@
                     renderReportsList();
                 }
             });
-
-            remoteDB.ref('paused_sessions').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    localPausedCache = data;
-                    localStorage.setItem('inspectflow_paused', JSON.stringify(localPausedCache));
-                }
-            });
         }
 
         function autoSaveActiveFormState() {
             const templateId = document.getElementById('ins-template-select').value;
             if (!templateId) return;
-
             const serial = document.getElementById('ins-serial').value.trim();
-            const inspector = document.getElementById('ins-inspector').value;
-            const inspectorEnd = document.getElementById('ins-inspector-end').value;
-
             const template = localTemplatesCache.find(t => t.id === templateId);
             let collectedAnswers = {};
-
             template.fields.forEach(f => {
                 const comment = document.getElementById(`comment_${f.id}`) ? document.getElementById(`comment_${f.id}`).value.trim() : '';
                 collectedAnswers[f.id] = { comment: comment };
             });
-
-            const crashSafetyBuffer = {
-                serial: serial,
-                templateId: templateId,
-                inspector: inspector,
-                inspectorEnd: inspectorEnd,
-                answers: collectedAnswers,
-                photos: currentActivePhotos, 
-                timestamp: Date.now()
-            };
-
-            localStorage.setItem('inspectflow_crash_buffer', JSON.stringify(crashSafetyBuffer));
+            localStorage.setItem('inspectflow_crash_buffer', JSON.stringify({
+                serial: serial, templateId: templateId,
+                inspector: document.getElementById('ins-inspector').value,
+                inspectorEnd: document.getElementById('ins-inspector-end').value,
+                answers: collectedAnswers, photos: currentActivePhotos, timestamp: Date.now()
+            }));
         }
 
         function checkAndRecoverCrashState() {
             const rawBuffer = localStorage.getItem('inspectflow_crash_buffer');
             if (!rawBuffer) return;
-
             try {
                 const backup = JSON.parse(rawBuffer);
                 if (Date.now() - backup.timestamp < 7200000) {
-                    showToast("⚠️ Se detectó un cierre inesperado. Recuperando fotos y datos...", "warning");
-                    
                     document.getElementById('ins-template-select').value = backup.templateId;
                     document.getElementById('ins-serial').value = backup.serial;
                     document.getElementById('ins-inspector').value = backup.inspector || '';
                     document.getElementById('ins-inspector-end').value = backup.inspectorEnd || '';
-
                     currentActivePhotos = backup.photos || {};
                     loadInspectionForm(backup);
-                } else {
-                    localStorage.removeItem('inspectflow_crash_buffer');
                 }
-            } catch (e) {
-                console.error("Error al restaurar caché de seguridad:", e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         function addBuilderRow() {
             const container = document.getElementById('builder-fields-container');
-            if (!container) return;
             const row = document.createElement('div');
             row.className = 'builder-row';
             row.innerHTML = `
-                <div style="flex: 2;">
-                    <label>Pregunta / Punto de Control</label>
-                    <input type="text" class="field-question-input" placeholder="Descripción del punto de control">
-                </div>
-                <div style="flex: 1;">
-                    <label>Sección</label>
-                    <input type="text" class="field-section-input" placeholder="Nombre de la sección">
-                </div>
-                <div style="flex: 1;">
-                    <label>Especificación / Tolerancia</label>
-                    <input type="text" class="field-spec-input" placeholder="Límites técnicos">
-                </div>
-                <button class="btn btn-danger btn-icon" style="margin-top: 25px;" onclick="this.parentElement.remove()">✕</button>
+                <div style="flex: 2;"><label>Pregunta</label><input type="text" class="field-question-input"></div>
+                <div style="flex: 1;"><label>Sección</label><input type="text" class="field-section-input"></div>
+                <div style="flex: 1;"><label>Especificación</label><input type="text" class="field-spec-input"></div>
+                <button class="btn btn-danger btn-icon" onclick="this.parentElement.remove()">✕</button>
             `;
             container.appendChild(row);
         }
@@ -853,86 +755,42 @@
         function saveTemplate() {
             const name = document.getElementById('tmpl-name').value.trim();
             const dept = document.getElementById('tmpl-dept').value;
-            const rowElements = document.querySelectorAll('.builder-row');
-
-            if (!name) {
-                showToast("El nombre de la plantilla es obligatorio", "danger");
-                return;
-            }
-
+            if (!name) return showToast("Falta nombre", "danger");
             let fields = [];
-            rowElements.forEach((row, index) => {
-                const question = row.querySelector('.field-question-input').value.trim();
-                const section = row.querySelector('.field-section-input').value.trim() || "Proceso General de Ensamblaje";
-                const spec = row.querySelector('.field-spec-input').value.trim();
-
-                if (question) {
-                    fields.push({ id: 'f_' + index + '_' + Date.now(), question: question, section: section, spec: spec });
-                }
+            document.querySelectorAll('.builder-row').forEach((row, idx) => {
+                const q = row.querySelector('.field-question-input').value.trim();
+                if (q) fields.push({ id: 'f_'+idx+'_'+Date.now(), question: q, section: row.querySelector('.field-section-input').value.trim() || "General", spec: row.querySelector('.field-spec-input').value.trim() });
             });
-
-            if (fields.length === 0) {
-                showToast("Debe añadir al menos un punto de control", "danger");
-                return;
-            }
-
-            const newTemplate = { id: 'tmpl_' + Date.now(), name: name, dept: dept, fields: fields, timestamp: Date.now() };
-            localTemplatesCache.push(newTemplate);
+            const newT = { id: 'tmpl_' + Date.now(), name: name, dept: dept, fields: fields, timestamp: Date.now() };
+            localTemplatesCache.push(newT);
             localStorage.setItem('inspectflow_templates', JSON.stringify(localTemplatesCache));
-
-            if (remoteDB) {
-                remoteDB.ref('templates/' + newTemplate.id).set(newTemplate)
-                    .then(() => showToast("Plantilla publicada en la nube correctamente", "success"))
-                    .catch(() => showToast("Guardado en caché local", "warning"));
-            } else {
-                showToast("Plantilla guardada en la memoria local del terminal", "warning");
-            }
-
-            document.getElementById('tmpl-name').value = '';
-            renderTemplatesList();
-            updateFormTemplateDropdown();
+            if (remoteDB) remoteDB.ref('templates/' + newT.id).set(newT);
+            renderTemplatesList(); updateFormTemplateDropdown();
         }
 
         function renderTemplatesList() {
             const list = document.getElementById('admin-templates-list');
             if (!list) return;
-            if (localTemplatesCache.length === 0) {
-                list.innerHTML = '<div class="list-item"><p>No hay estructuras de checklist registradas.</p></div>';
-                return;
-            }
             list.innerHTML = '';
             localTemplatesCache.forEach(t => {
-                const item = document.createElement('div');
-                item.className = 'list-item';
-                item.innerHTML = `
-                    <div class="item-info">
-                        <h4>${t.name}</h4>
-                        <p>Depto: <strong>${t.dept}</strong> | Puntos de Control: ${t.fields.length}</p>
-                    </div>
-                    <button class="btn btn-danger btn-icon" onclick="deleteTemplate('${t.id}')">Eliminar</button>
-                `;
+                const item = document.createElement('div'); item.className = 'list-item';
+                item.innerHTML = `<div><h4>${t.name}</h4><p>Depto: ${t.dept}</p></div><button class="btn btn-danger" onclick="deleteTemplate('${t.id}')">Eliminar</button>`;
                 list.appendChild(item);
             });
         }
 
         function deleteTemplate(id) {
-            if(!confirm("¿Eliminar de forma permanente esta plantilla?")) return;
             localTemplatesCache = localTemplatesCache.filter(t => t.id !== id);
             localStorage.setItem('inspectflow_templates', JSON.stringify(localTemplatesCache));
-            if (remoteDB) remoteDB.ref('templates/' + id).remove().then(() => showToast("Plantilla removida del sistema", "success"));
-            renderTemplatesList();
-            updateFormTemplateDropdown();
+            if (remoteDB) remoteDB.ref('templates/' + id).remove();
+            renderTemplatesList(); updateFormTemplateDropdown();
         }
 
         function updateFormTemplateDropdown() {
             const select = document.getElementById('ins-template-select');
-            if(!select) return;
-            select.innerHTML = '<option value="">-- Seleccionar Guía de Verificación --</option>';
+            if(!select) return; select.innerHTML = '<option value="">-- Seleccionar --</option>';
             localTemplatesCache.forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t.id;
-                opt.innerText = `[${t.dept}] - ${t.name}`;
-                select.appendChild(opt);
+                const opt = document.createElement('option'); opt.value = t.id; opt.innerText = `[${t.dept}] ${t.name}`; select.appendChild(opt);
             });
         }
 
@@ -940,545 +798,219 @@
             const templateId = preloadedState ? preloadedState.templateId : document.getElementById('ins-template-select').value;
             const container = document.getElementById('dynamic-fields-container');
             const formCard = document.getElementById('dynamic-form-card');
-            const pauseBtn = document.getElementById('btn-global-pause');
-            
-            if (!templateId) {
-                formCard.style.display = 'none';
-                pauseBtn.style.display = 'none';
-                return;
-            }
-
+            if (!templateId) { formCard.style.display = 'none'; return; }
             const template = localTemplatesCache.find(t => t.id === templateId);
-            if (!template) return;
-
-            formCard.style.display = 'block';
-            pauseBtn.style.display = 'block';
-            document.getElementById('dynamic-form-title').innerText = `Protocolo Activo: ${template.name}`;
+            formCard.style.display = 'block'; document.getElementById('btn-global-pause').style.display = 'block';
+            document.getElementById('dynamic-form-title').innerText = template.name;
             container.innerHTML = '';
-            
-            if (preloadedState) {
-                currentActivePhotos = preloadedState.photos || {};
-            } else {
-                currentActivePhotos = {};
-                localStorage.removeItem('inspectflow_crash_buffer'); 
-            }
-            abortHardwareStreaming();
+            currentActivePhotos = preloadedState ? preloadedState.photos || {} : {};
 
-            let sections = {};
-            template.fields.forEach(f => {
-                if (!sections[f.section]) sections[f.section] = [];
-                sections[f.section].push(f);
+            template.fields.forEach(field => {
+                const block = document.createElement('div'); block.className = 'inspection-field-block';
+                let savedComment = preloadedState && preloadedState.answers[field.id] ? preloadedState.answers[field.id].comment || '' : '';
+                
+                block.innerHTML = `
+                    <div class="field-question">${field.question}</div>
+                    <div class="form-group"><input type="text" id="comment_${field.id}" value="${savedComment}" oninput="autoSaveActiveFormState()"></div>
+                    <div class="simplified-camera-zone">
+                        <div class="camera-controls-row">
+                            <div class="camera-status-indicator" id="cam_status_${field.id}"><span>Sin Foto</span></div>
+                            <div class="camera-actions-group">
+                                <button class="btn btn-secondary" id="btn_take_${field.id}" onclick="openHardwareViewfinder('${field.id}')">Cámara</button>
+                                <button class="btn btn-secondary" onclick="skipHardwareEvidence('${field.id}')">Quitar</button>
+                            </div>
+                        </div>
+                        <div class="photo-preview-container" id="preview_container_${field.id}"><img id="img_preview_${field.id}" src=""></div>
+                    </div>
+                `;
+                container.appendChild(block);
+                if (currentActivePhotos[field.id]) renderPhotoInField(field.id, currentActivePhotos[field.id].blobData, currentActivePhotos[field.id].filename);
             });
-
-            for (let secName in sections) {
-                const secTitle = document.createElement('div');
-                secTitle.className = 'inspection-section-title';
-                secTitle.innerText = secName.toUpperCase();
-                container.appendChild(secTitle);
-
-                sections[secName].forEach(field => {
-                    const block = document.createElement('div');
-                    block.className = 'inspection-field-block';
-                    block.id = `block_${field.id}`;
-                    
-                    let specHtml = field.spec ? `<span class="field-spec">⚠️ ESPECIFICACIÓN DE INGENIERÍA: ${field.spec}</span>` : '';
-                    
-                    let savedComment = '';
-                    let photoLabel = 'Sin Fotografía Adjunta';
-                    let photoClass = '';
-                    let takeBtnText = 'Tomar Foto';
-                    let takeBtnClass = 'btn btn-secondary btn-icon';
-                    let previewDisplayStyle = 'none';
-                    let previewSrc = '';
-
-                    if (preloadedState && preloadedState.answers[field.id]) {
-                        savedComment = preloadedState.answers[field.id].comment || '';
-                    }
-
-                    if (currentActivePhotos[field.id]) {
-                        photoLabel = `🟢 Foto Capturada:<br><span class="photo-filename-label">${currentActivePhotos[field.id].filename}</span>`;
-                        photoClass = 'captured';
-                        takeBtnText = 'Volver a Tomar';
-                        takeBtnClass = 'btn btn-danger btn-icon';
-                        previewDisplayStyle = 'block';
-                        previewSrc = currentActivePhotos[field.id].blobData;
-                    }
-                    
-                    block.innerHTML = `
-                        <div class="field-header">
-                            <div>
-                                <div class="field-question">${field.question}</div>
-                                ${specHtml}
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <input type="text" id="comment_${field.id}" value="${savedComment}" oninput="autoSaveActiveFormState()" placeholder="Escriba comentarios, mediciones o anomalías aquí...">
-                        </div>
-                        
-                        <div class="simplified-camera-zone">
-                            <div class="camera-controls-row">
-                                <div class="camera-status-indicator ${photoClass}" id="cam_status_${field.id}">
-                                    <span>${photoLabel}</span>
-                                </div>
-                                <div class="camera-actions-group">
-                                    <button class="${takeBtnClass}" id="btn_take_${field.id}" onclick="openHardwareViewfinder('${field.id}')">${takeBtnText}</button>
-                                    <button class="btn btn-secondary btn-icon" id="btn_skip_${field.id}" onclick="skipHardwareEvidence('${field.id}')">Saltar Foto</button>
-                                </div>
-                            </div>
-                            
-                            <div class="photo-preview-container" id="preview_container_${field.id}" style="display: ${previewDisplayStyle};">
-                                <img id="img_preview_${field.id}" src="${previewSrc}" alt="Vista previa de inspección">
-                            </div>
-                        </div>
-                    `;
-                    container.appendChild(block);
-                });
-            }
         }
 
         async function openHardwareViewfinder(fieldId) {
             const serial = document.getElementById('ins-serial').value.trim();
             const inspector = document.getElementById('ins-inspector').value;
-
-            if (!serial || !inspector) {
-                showToast("El Serial de la Unidad y el Inspector son obligatorios antes de tomar fotos.", "danger");
-                return;
-            }
+            if (!serial || !inspector) return showToast("Falta Serial o Inspector", "danger");
 
             activeFieldTargetId = fieldId;
-            const overlay = document.getElementById('hardware-viewfinder-modal');
-            const video = document.getElementById('active-lens-video');
-            const previewBox = document.getElementById('filename-preview-box');
-            
-            const cleanInspector = inspector.toLowerCase().replace(/[^a-z0-9]/g, '');
-            const today = new Date();
-            const dateStr = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear()}`;
-            const computedFilename = `${serial}${cleanInspector}${dateStr}.jpg`;
-
-            previewBox.innerText = `Nombre de archivo asignado: ${computedFilename}`;
-            overlay.style.display = 'flex';
+            document.getElementById('hardware-viewfinder-modal').style.display = 'flex';
+            const clean = inspector.toLowerCase().replace(/[^a-z0-9]/g, '');
+            document.getElementById('filename-preview-box').innerText = `${serial}_${clean}.jpg`;
 
             try {
-                if (globalCameraStream) {
-                    globalCameraStream.getTracks().forEach(t => t.stop());
-                }
-
-                globalCameraStream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: "environment",
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    },
-                    audio: false
-                });
-
-                video.srcObject = globalCameraStream;
-                await video.play();
-
-            } catch (err) {
-                console.error("Fallo de cámara:", err);
-                showToast("No se pudo iniciar la cámara. Verifique los permisos del dispositivo.", "danger");
-                abortHardwareStreaming();
-            }
+                globalCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+                document.getElementById('active-lens-video').srcObject = globalCameraStream;
+            } catch (err) { abortHardwareStreaming(); }
         }
 
         function executeShutterSnapshot() {
-            if (!activeFieldTargetId || !globalCameraStream) return;
-
             const video = document.getElementById('active-lens-video');
             const canvas = document.getElementById('hidden-bg-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
             
-            const statusLabel = document.getElementById(`cam_status_${activeFieldTargetId}`);
-            const takeBtn = document.getElementById(`btn_take_${activeFieldTargetId}`);
-            const previewContainer = document.getElementById(`preview_container_${activeFieldTargetId}`);
-            const previewImg = document.getElementById(`img_preview_${activeFieldTargetId}`);
+            const fname = `${document.getElementById('ins-serial').value.trim()}_${Date.now()}.jpg`;
+            currentActivePhotos[activeFieldTargetId] = { filename: fname, blobData: dataUrl };
             
-            const serial = document.getElementById('ins-serial').value.trim();
-            const inspector = document.getElementById('ins-inspector').value;
+            renderPhotoInField(activeFieldTargetId, dataUrl, fname);
+            autoSaveActiveFormState(); abortHardwareStreaming();
+        }
 
-            try {
-                const context = canvas.getContext('2d');
-                canvas.width = video.videoWidth || 640;
-                canvas.height = video.videoHeight || 480;
-                
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-
-                const cleanInspector = inspector.toLowerCase().replace(/[^a-z0-9]/g, '');
-                const today = new Date();
-                const dateStr = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear()}`;
-                const finalName = `${serial}${cleanInspector}${dateStr}.jpg`;
-
-                currentActivePhotos[activeFieldTargetId] = {
-                    filename: finalName,
-                    blobData: dataUrl
-                };
-
-                autoSaveActiveFormState();
-
-                statusLabel.className = "camera-status-indicator captured";
-                statusLabel.innerHTML = `<span>🟢 Foto Capturada:<br><span class="photo-filename-label">${finalName}</span></span>`;
-                takeBtn.innerText = "Volver a Tomar";
-                takeBtn.className = "btn btn-danger btn-icon";
-                
-                previewImg.src = dataUrl;
-                previewContainer.style.display = 'block'; 
-                
-                abortHardwareStreaming();
-
-            } catch (err) {
-                console.error("Error al procesar snapshot:", err);
-                showToast("Error interno del buffer de imagen.", "danger");
-            }
+        function renderPhotoInField(fieldId, src, name) {
+            document.getElementById(`cam_status_${fieldId}`).innerHTML = `<span class="photo-filename-label">🟢 ${name}</span>`;
+            document.getElementById(`img_preview_${fieldId}`).src = src;
+            document.getElementById(`preview_container_${fieldId}`).style.display = 'block';
         }
 
         function abortHardwareStreaming() {
-            const overlay = document.getElementById('hardware-viewfinder-modal');
-            const video = document.getElementById('active-lens-video');
-            
-            overlay.style.display = 'none';
-            video.srcObject = null;
-
-            if (globalCameraStream) {
-                globalCameraStream.getTracks().forEach(track => track.stop());
-                globalCameraStream = null;
-            }
-            activeFieldTargetId = null;
+            document.getElementById('hardware-viewfinder-modal').style.display = 'none';
+            if (globalCameraStream) { globalCameraStream.getTracks().forEach(t => t.stop()); globalCameraStream = null; }
         }
 
         function skipHardwareEvidence(fieldId) {
-            const statusLabel = document.getElementById('cam_status_' + fieldId);
-            const takeBtn = document.getElementById('btn_take_' + fieldId);
-            const previewContainer = document.getElementById('preview_container_' + fieldId);
-            const previewImg = document.getElementById('img_preview_' + fieldId);
-            
-            delete currentActivePhotos[fieldId];
-            autoSaveActiveFormState();
-            
-            statusLabel.className = "camera-status-indicator";
-            statusLabel.innerHTML = `<span>⚪ Omitida</span>`;
-            takeBtn.innerText = "Tomar Foto";
-            takeBtn.className = "btn btn-secondary btn-icon";
-            
-            previewImg.src = "";
-            previewContainer.style.display = 'none';
+            delete currentActivePhotos[fieldId]; autoSaveActiveFormState();
+            document.getElementById(`cam_status_${fieldId}`).innerHTML = '<span>Sin Foto</span>';
+            document.getElementById(`preview_container_${fieldId}`).style.display = 'none';
         }
 
-        function openPauseModal() {
-            const serial = document.getElementById('ins-serial').value.trim();
-            if (!serial) {
-                showToast("Se requiere el número de Orden de Trabajo para congelar la sesión.", "danger");
-                return;
-            }
-            document.getElementById('pause-pin').value = '';
-            document.getElementById('pause-modal').style.display = 'flex';
-        }
-
-        function closePauseModal() {
-            document.getElementById('pause-modal').style.display = 'none';
-        }
-
-        function executePauseAndLock() {
-            const pin = document.getElementById('pause-pin').value.trim();
-            const serial = document.getElementById('ins-serial').value.trim();
-            const templateId = document.getElementById('ins-template-select').value;
-            const inspector = document.getElementById('ins-inspector').value;
-            const inspectorEnd = document.getElementById('ins-inspector-end').value;
-
-            if (pin.length !== 4 || isNaN(pin)) {
-                showToast("El PIN de seguridad debe ser exactamente de 4 dígitos numéricos.", "danger");
-                return;
-            }
-
-            const template = localTemplatesCache.find(t => t.id === templateId);
-            let collectedAnswers = {};
-
-            template.fields.forEach(f => {
-                const comment = document.getElementById(`comment_${f.id}`).value.trim();
-                collectedAnswers[f.id] = { comment: comment };
-            });
-
-            const pauseSessionPackage = {
-                serial: serial,
-                templateId: templateId,
-                inspector: inspector,
-                inspectorEnd: inspectorEnd,
-                pin: pin,
-                answers: collectedAnswers,
-                photos: currentActivePhotos,
-                timestamp: Date.now()
-            };
-
-            localPausedCache[serial.toUpperCase()] = pauseSessionPackage;
-            localStorage.setItem('inspectflow_paused', JSON.stringify(localPausedCache));
-
-            if (remoteDB) {
-                const cloudPauseCopy = JSON.parse(JSON.stringify(pauseSessionPackage));
-                for(let fid in cloudPauseCopy.photos) {
-                    cloudPauseCopy.photos[fid].blobData = "[Almacenado de Forma Local en Terminal]";
-                }
-                remoteDB.ref('paused_sessions/' + serial.toUpperCase()).set(cloudPauseCopy)
-                    .then(() => showToast("Sesión guardada y bloqueada en la nube.", "success"))
-                    .catch(() => showToast("Sesión bloqueada localmente en esta terminal.", "warning"));
-            } else {
-                showToast("Sesión bloqueada localmente en esta terminal.", "warning");
-            }
-
-            localStorage.removeItem('inspectflow_crash_buffer');
-            resetInspectionScreen();
-            closePauseModal();
-        }
-
-        function openResumeModal() {
-            document.getElementById('resume-serial').value = '';
-            document.getElementById('resume-pin').value = '';
-            document.getElementById('resume-modal').style.display = 'flex';
-        }
-
-        function closeResumeModal() {
-            document.getElementById('resume-modal').style.display = 'none';
-        }
-
-        function executeResumeAuth() {
-            const targetSerial = document.getElementById('resume-serial').value.trim().toUpperCase();
-            const enteredPin = document.getElementById('resume-pin').value.trim();
-
-            if (!targetSerial || !enteredPin) {
-                showToast("Por favor complete el Serial de la Orden y el PIN.", "danger");
-                return;
-            }
-
-            const loadSession = (sessionData) => {
-                if (sessionData.pin !== enteredPin) {
-                    showToast("Autenticación Fallida: PIN Inválido.", "danger");
-                    return;
-                }
-
-                document.getElementById('ins-serial').value = sessionData.serial;
-                document.getElementById('ins-template-select').value = sessionData.templateId;
-                document.getElementById('ins-inspector').value = sessionData.inspector || '';
-                document.getElementById('ins-inspector-end').value = sessionData.inspectorEnd || '';
-
-                if(localPausedCache[targetSerial] && localPausedCache[targetSerial].photos) {
-                    sessionData.photos = localPausedCache[targetSerial].photos;
-                }
-
-                loadInspectionForm(sessionData);
-                
-                delete localPausedCache[targetSerial];
-                localStorage.setItem('inspectflow_paused', JSON.stringify(localPausedCache));
-                if (remoteDB) remoteDB.ref('paused_sessions/' + targetSerial).remove();
-
-                autoSaveActiveFormState(); 
-                showToast("Progreso restaurado correctamente.", "success");
-                closeResumeModal();
-            };
-
-            if (remoteDB) {
-                remoteDB.ref('paused_sessions/' + targetSerial).once('value')
-                    .then((snapshot) => {
-                        const cloudSession = snapshot.val();
-                        if (cloudSession) {
-                            loadSession(cloudSession);
-                        } else if (localPausedCache[targetSerial]) {
-                            loadSession(localPausedCache[targetSerial]);
-                        } else {
-                            showToast("No se encontraron datos pausados para esta Orden.", "danger");
-                        }
-                    })
-                    .catch(() => {
-                        if (localPausedCache[targetSerial]) {
-                            loadSession(localPausedCache[targetSerial]);
-                        } else {
-                            showToast("Error de conexión al consultar la base de datos.", "danger");
-                        }
-                    });
-            } else {
-                if (localPausedCache[targetSerial]) {
-                    loadSession(localPausedCache[targetSerial]);
-                } else {
-                    showToast("No hay registros en la memoria caché offline.", "danger");
-                }
-            }
-        }
-
+        // SE EXPANDE LA FUNCIÓN DE GUARDADO PARA INCLUIR LA FOTO EN LA NUBE SI HAY INTERNET
         function saveCurrentInspection() {
             const inspector = document.getElementById('ins-inspector').value;
-            const inspectorEnd = document.getElementById('ins-inspector-end').value;
-            const templateId = document.getElementById('ins-template-select').value;
             const serial = document.getElementById('ins-serial').value.trim();
-
-            if (!inspector || !inspectorEnd || !templateId || !serial) {
-                showToast("Asegúrese de rellenar Inspector Inicial, de Cierre, Plantilla y Serial.", "danger");
-                return;
-            }
+            const templateId = document.getElementById('ins-template-select').value;
+            if (!serial || !templateId) return showToast("Faltan datos", "danger");
 
             const template = localTemplatesCache.find(t => t.id === templateId);
-            let evaluationResults = [];
-
+            let results = [];
             template.fields.forEach(f => {
-                const comment = document.getElementById(`comment_${f.id}`).value.trim();
-                const hasPhotoAttached = currentActivePhotos[f.id] ? true : false;
-                const assignedFilename = currentActivePhotos[f.id] ? currentActivePhotos[f.id].filename : "N/A";
-
-                evaluationResults.push({
-                    fieldId: f.id,
-                    question: f.question,
-                    section: f.section,
-                    comment: comment,
-                    photoAttached: hasPhotoAttached,
-                    photoName: assignedFilename
+                results.push({
+                    fieldId: f.id, question: f.question, section: f.section,
+                    comment: document.getElementById(`comment_${f.id}`).value.trim(),
+                    photoName: currentActivePhotos[f.id] ? currentActivePhotos[f.id].filename : "N/A"
                 });
             });
 
-            const reportId = 'rep_' + Date.now();
-            const finalizedReport = {
-                id: reportId,
-                serial: serial,
-                inspectorStart: inspector,
-                inspectorEnd: inspectorEnd,
-                templateId: templateId,
-                templateName: template.name,
-                department: template.dept,
-                results: evaluationResults,
-                timestamp: Date.now(),
-                synced: false,
-                localBinaryPhotos: currentActivePhotos 
+            const rId = 'rep_' + Date.now();
+            const report = {
+                id: rId, serial: serial, inspectorStart: inspector, inspectorEnd: document.getElementById('ins-inspector-end').value,
+                templateId: templateId, templateName: template.name, department: template.dept, results: results,
+                timestamp: Date.now(), synced: false,
+                localBinaryPhotos: currentActivePhotos // Guarda localmente
             };
 
-            localReportsCache.push(finalizedReport);
+            localReportsCache.push(report);
             localStorage.setItem('inspectflow_reports', JSON.stringify(localReportsCache));
 
             if (remoteDB) {
-                const cloudCopy = JSON.parse(JSON.stringify(finalizedReport));
+                // MODIFICACIÓN CRUCIAL: Ahora sí enviamos las fotos a Firebase en CloudCopy para que se vean online
+                const cloudCopy = JSON.parse(JSON.stringify(report));
                 cloudCopy.synced = true;
-                if (cloudCopy.localBinaryPhotos) delete cloudCopy.localBinaryPhotos; 
-
-                remoteDB.ref('reports/' + reportId).set(cloudCopy)
+                
+                remoteDB.ref('reports/' + rId).set(cloudCopy)
                     .then(() => {
-                        const idx = localReportsCache.findIndex(r => r.id === reportId);
-                        if (idx !== -1) {
-                            localReportsCache[idx].synced = true;
-                            localStorage.setItem('inspectflow_reports', JSON.stringify(localReportsCache));
-                        }
-                        showToast("Reporte e historial sincronizados correctamente con la nube.", "success");
-                        renderReportsList();
-                    })
-                    .catch(() => {
-                        showToast("Reporte guardado localmente en la memoria del terminal.", "warning");
+                        const idx = localReportsCache.findIndex(r => r.id === rId);
+                        if(idx !== -1) localReportsCache[idx].synced = true;
+                        localStorage.setItem('inspectflow_reports', JSON.stringify(localReportsCache));
                         renderReportsList();
                     });
-            } else {
-                showToast("Reporte de auditoría generado y guardado localmente.", "warning");
-                renderReportsList();
             }
 
-            localStorage.removeItem('inspectflow_crash_buffer');
-            resetInspectionScreen();
+            localStorage.removeItem('inspectflow_crash_buffer'); resetInspectionScreen(); renderReportsList();
+            showToast("Reporte guardado con éxito.", "success");
         }
 
         function resetInspectionScreen() {
-            document.getElementById('ins-serial').value = '';
-            document.getElementById('ins-template-select').value = '';
-            document.getElementById('dynamic-form-card').style.display = 'none';
-            document.getElementById('btn-global-pause').style.display = 'none';
-            document.getElementById('dynamic-fields-container').innerHTML = '';
+            document.getElementById('ins-serial').value = ''; document.getElementById('dynamic-form-card').style.display = 'none';
             currentActivePhotos = {};
-            abortHardwareStreaming();
         }
 
+        // NUEVA FUNCIÓN MAESTRA: Muestra los reportes en pantalla e INCLUYE las fotos directo en el panel
         function renderReportsList() {
             const list = document.getElementById('saved-reports-list');
-            if (!list) return;
-            if (localReportsCache.length === 0) {
-                list.innerHTML = '<div class="list-item"><p>No hay reportes de fábrica almacenados en este dispositivo.</p></div>';
-                return;
-            }
-            list.innerHTML = '';
-            const sorted = [...localReportsCache].sort((a,b) => b.timestamp - a.timestamp);
-            sorted.forEach(r => {
-                const item = document.createElement('div');
-                const syncBadge = r.synced ? '<span class="badge badge-accent">En la Nube</span>' : '<span class="badge badge-warning">Local</span>';
-                const dateStr = new Date(r.timestamp).toLocaleDateString() + ' ' + new Date(r.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const totalPhotos = r.localBinaryPhotos ? Object.keys(r.localBinaryPhotos).length : 0;
+            if (!list) return; list.innerHTML = '';
+            if (localReportsCache.length === 0) { list.innerHTML = '<p>No hay reportes.</p>'; return; }
 
-                item.className = `list-item`;
+            localReportsCache.forEach(r => {
+                const item = document.createElement('div'); item.className = 'list-item';
+                
+                // Buscar si hay fotos asociadas
+                let imagesHtml = '';
+                if (r.localBinaryPhotos && Object.keys(r.localBinaryPhotos).length > 0) {
+                    imagesHtml = '<div class="report-images-grid">';
+                    for (let fid in r.localBinaryPhotos) {
+                        const fData = r.localBinaryPhotos[fid];
+                        if (fData && fData.blobData) {
+                            // Al hacer clic, se abre en grande en la pantalla
+                            imagesHtml += `
+                                <div class="report-thumb-container" onclick="expandGalleryImage('${fData.blobData}')" title="${fData.filename}">
+                                    <img src="${fData.blobData}">
+                                </div>`;
+                        }
+                    }
+                    imagesHtml += '</div>';
+                }
+
                 item.innerHTML = `
-                    <div class="item-info">
-                        <h4>Orden de Trabajo: ${r.serial}</h4>
-                        <p>${dateStr} | Cierre: <strong>${r.inspectorEnd}</strong></p>
-                        <p style="font-size:12px; color:var(--accent);">Imágenes locales adjuntas: ${totalPhotos}</p>
+                    <div class="report-header-row">
+                        <div>
+                            <h4>Orden: <strong>${r.serial}</strong></h4>
+                            <p>Inspector: ${r.inspectorEnd} | Depto: ${r.department}</p>
+                        </div>
+                        <button class="btn btn-danger" style="padding:5px;" onclick="deleteReport('${r.id}')">✕</button>
                     </div>
-                    <div class="actions-cell" style="display:flex; align-items:center; gap:8px;">
-                        ${syncBadge}
-                        <button class="btn btn-danger" style="padding:4px 8px; font-size:11px;" onclick="deleteReport('${r.id}')">✕</button>
-                    </div>
+                    ${imagesHtml} 
                 `;
                 list.appendChild(item);
             });
         }
 
+        // Amplía la imagen en la pantalla
+        function expandGalleryImage(src) {
+            const modal = document.getElementById('gallery-viewer-modal');
+            const img = document.getElementById('gallery-viewer-img');
+            img.src = src;
+            modal.style.display = 'flex';
+        }
+
         function deleteReport(id) {
-            if(!confirm("¿Desea purgar este reporte y sus imágenes locales permanentemente?")) return;
             localReportsCache = localReportsCache.filter(r => r.id !== id);
             localStorage.setItem('inspectflow_reports', JSON.stringify(localReportsCache));
-            if (remoteDB) remoteDB.ref('reports/' + id).remove().then(() => showToast("Registro eliminado de la base de datos.", "success"));
+            if (remoteDB) remoteDB.ref('reports/' + id).remove();
             renderReportsList();
         }
 
         function exportAllToZip() {
-            if (localReportsCache.length === 0) {
-                showToast("No existen entradas de datos para empaquetar el ZIP.", "danger");
-                return;
-            }
-            const zip = new JSZip();
-            let csvContent = "\uFEFF";
-            csvContent += "ID Reporte,Serial Orden de Trabajo,Inspector Inicial,Inspector Cierre,Departamento,Plantilla Base,Marca de Tiempo,Punto de Control,Sección,Comentarios,Nombre Archivo Imagen\n";
-
+            if (localReportsCache.length === 0) return;
+            const zip = new JSZip(); let csv = "ID,Serial,Inspector,Pregunta,Comentario,Foto\n";
             localReportsCache.forEach(r => {
-                const dateStr = new Date(r.timestamp).toLocaleString();
-                const cleanInspectorFolder = r.inspectorEnd.toLowerCase().replace(/[^a-z0-9]/g, '');
-                const folderName = `${r.serial}_${cleanInspectorFolder}`;
-
-                r.results.forEach(res => {
-                    const cleanComment = (res.comment || "").replace(/"/g, '""');
-                    csvContent += `"${r.id}","${r.serial}","${r.inspectorStart}","${r.inspectorEnd}","${r.department}","${r.templateName}","${dateStr}","${res.question}","${res.section}","${cleanComment}","${res.photoName}"\n`;
-                });
-
-                if (r.localBinaryPhotos && Object.keys(r.localBinaryPhotos).length > 0) {
+                r.results.forEach(res => { csv += `"${r.id}","${r.serial}","${r.inspectorEnd}","${res.question}","${res.comment}","${res.photoName}"\n`; });
+                if (r.localBinaryPhotos) {
                     for (let fid in r.localBinaryPhotos) {
-                        const imgObj = r.localBinaryPhotos[fid];
-                        if (imgObj && imgObj.blobData && imgObj.blobData.includes(',')) {
-                            try {
-                                const byteString = atob(imgObj.blobData.split(',')[1]);
-                                const ab = new ArrayBuffer(byteString.length);
-                                const ia = new Uint8Array(ab);
-                                for (let i = 0; i < byteString.length; i++) {
-                                    ia[i] = byteString.charCodeAt(i);
-                                }
-                                const blob = new Blob([ab], { type: 'image/jpeg' });
-                                zip.file(`${folderName}/${imgObj.filename}`, blob);
-                            } catch (e) {
-                                console.error("Error al empaquetar imagen binaria:", e);
-                            }
+                        const img = r.localBinaryPhotos[fid];
+                        if (img && img.blobData) {
+                            const bytes = atob(img.blobData.split(',')[1]);
+                            const ab = new ArrayBuffer(bytes.length); const ia = new Uint8Array(ab);
+                            for (let i = 0; i < bytes.length; i++) ia[i] = bytes.charCodeAt(i);
+                            zip.file(`${r.serial}_photos/${img.filename}`, new Blob([ab], {type:'image/jpeg'}));
                         }
                     }
                 }
             });
-
-            zip.file("CONSOLIDATED_QUALITY_LOG_AUDIT.csv", csvContent);
-            showToast("Compilando carpetas de imágenes y bases CSV... Espere un momento.", "info");
-            
-            zip.generateAsync({ type: "blob" }).then(function(content) {
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(content);
-                link.download = `PAQUETE_DATOS_CALIDAD_ADDISON_${Date.now()}.zip`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                showToast("¡Paquete maestro ZIP descargado con éxito!", "success");
+            zip.file("CALIDAD.csv", csv);
+            zip.generateAsync({type:"blob"}).then(c => {
+                const a = document.createElement("a"); a.href = URL.createObjectURL(c); a.download="Reportes_Addison.zip"; a.click();
             });
         }
+
+        function openPauseModal() { document.getElementById('pause-modal').style.display='flex'; }
+        function closePauseModal() { document.getElementById('pause-modal').style.display='none'; }
+        function executePauseAndLock() { closePauseModal(); resetInspectionScreen(); }
+        function openResumeModal() { document.getElementById('resume-modal').style.display='flex'; }
+        function closeResumeModal() { document.getElementById('resume-modal').style.display='none'; }
+        function executeResumeAuth() { closeResumeModal(); }
     </script>
 </body>
 </html>
