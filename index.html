@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InspectFlow Pro - Quality Inspection System</title>
     
-    <!-- Firebase App and Realtime Database (Compat SDKs) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     
-    <!-- JSZip Library for report packaging -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <style>
@@ -395,7 +393,6 @@
         <button id="btn-nav-admin" class="nav-btn" onclick="switchView('admin-view', this)">Admin Control Panel</button>
     </nav>
 
-    <!-- VIEW 1: INSPECTOR MODE -->
     <div id="inspector-view" class="view-panel active">
         <div class="grid-2">
             <div class="card">
@@ -457,7 +454,6 @@
         </div>
     </div>
 
-    <!-- VIEW 2: ADMIN PANEL -->
     <div id="admin-view" class="view-panel">
         <div class="grid-2">
             <div class="card">
@@ -521,7 +517,6 @@
         </div>
     </div>
 
-    <!-- MODAL 1: SET PAUSE PIN -->
     <div id="pause-modal" class="custom-modal">
         <div class="modal-content">
             <div class="modal-title">Pause Inspection Session</div>
@@ -539,7 +534,6 @@
         </div>
     </div>
 
-    <!-- MODAL 2: RESUME PIN AUTHENTICATION -->
     <div id="resume-modal" class="custom-modal">
         <div class="modal-content">
             <div class="modal-title">Resume Paused Inspection</div>
@@ -558,7 +552,6 @@
         </div>
     </div>
 
-    <!-- Hidden global hardware utilities for isolated background capture tracking -->
     <video id="hidden-bg-video" autoplay playsinline style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;"></video>
     <canvas id="hidden-bg-canvas" style="display:none;"></canvas>
 
@@ -597,7 +590,7 @@
 
         let localTemplatesCache = [];
         let localReportsCache = [];
-        let localPausedCache = {}; // Local storage fallbacks for paused tasks
+        let localPausedCache = {}; 
         let currentActivePhotos = {};
         let globalCameraStream = null;
 
@@ -667,7 +660,6 @@
                 }
             });
 
-            // Keep track of real-time cloud updates for paused sessions
             remoteDB.ref('paused_sessions').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
@@ -849,7 +841,6 @@
                     
                     let specHtml = field.spec ? `<span class="field-spec">⚠️ ENGINEERING SPEC LIMIT: ${field.spec}</span>` : '';
                     
-                    // Recover previous structural values if resuming state logs
                     let passChecked = '';
                     let failChecked = '';
                     let savedComment = '';
@@ -895,7 +886,7 @@
                                 <span>${photoLabel}</span>
                             </div>
                             <div class="camera-actions-group">
-                                <button class="btn btn-secondary btn-icon" id="btn_take_${field.id}" class="${takeBtnClass}" onclick="triggerHardwareCapture('${field.id}')">${takeBtnText}</button>
+                                <button class="${takeBtnClass}" id="btn_take_${field.id}" onclick="triggerHardwareCapture('${field.id}')">${takeBtnText}</button>
                                 <button class="btn btn-secondary btn-icon" id="btn_skip_${field.id}" onclick="skipHardwareEvidence('${field.id}')">Skip Picture</button>
                             </div>
                         </div>
@@ -904,20 +895,6 @@
                 });
             }
             evaluateFormCounters();
-            initializeGlobalCameraStream();
-        }
-
-        function initializeGlobalCameraStream() {
-            if (globalCameraStream) return;
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
-                .then(stream => {
-                    globalCameraStream = stream;
-                    document.getElementById('hidden-bg-video').srcObject = stream;
-                })
-                .catch(err => {
-                    console.error("Camera interface initialization failed:", err);
-                    showToast("Hardware subsystem blocked. Check native device security profile permissions.", "danger");
-                });
         }
 
         function releaseGlobalCamera() {
@@ -927,31 +904,45 @@
             }
         }
 
-        function triggerHardwareCapture(fieldId) {
+        // NUEVA LOGICA BAJO DEMANDA: Inicializa y captura en el mismo clic para saltar bloqueos de Android/iOS
+        async function triggerHardwareCapture(fieldId) {
             const video = document.getElementById('hidden-bg-video');
             const canvas = document.getElementById('hidden-bg-canvas');
             const statusLabel = document.getElementById(`cam_status_${fieldId}`);
             const takeBtn = document.getElementById(`btn_take_${fieldId}`);
 
-            if (!globalCameraStream) {
-                showToast("Hardware stack offline. Attempting safe reconnection restart...", "warning");
-                initializeGlobalCameraStream();
-                return;
+            showToast("Accessing hardware lens... Please hold unit steady", "info");
+
+            try {
+                // Si la cámara no está encendida, la encendemos justo ahora (acción del usuario válida)
+                if (!globalCameraStream) {
+                    globalCameraStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: "environment" }, 
+                        audio: false 
+                    });
+                    video.srcObject = globalCameraStream;
+                    // Pequeña pausa técnica de 300ms para permitir que el sensor del celular calibre la luz
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                currentActivePhotos[fieldId] = [dataUrl]; 
+
+                statusLabel.className = "camera-status-indicator captured";
+                statusLabel.innerHTML = `<span>🟢 Photo Captured</span>`;
+                takeBtn.innerText = "Re-take Picture";
+                takeBtn.className = "btn btn-danger btn-icon";
+                showToast("Evidence snapshot locked successfully", "success");
+
+            } catch (err) {
+                console.error("Camera interface initialization failed:", err);
+                showToast("Hardware connection blocked. Please verify browser camera permissions.", "danger");
             }
-
-            const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth || 640;
-            canvas.height = video.videoHeight || 480;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-            currentActivePhotos[fieldId] = [dataUrl]; 
-
-            statusLabel.className = "camera-status-indicator captured";
-            statusLabel.innerHTML = `<span>🟢 Photo Captured</span>`;
-            takeBtn.innerText = "Re-take Picture";
-            takeBtn.className = "btn btn-danger btn-icon";
-            showToast("Evidence snapshot locked successfully", "success");
         }
 
         function skipHardwareEvidence(fieldId) {
@@ -985,9 +976,6 @@
             document.getElementById('stat-fail-count').innerText = `Failed: ${fail}`;
         }
 
-        // ====================================================
-        // PAUSE & RESUME TRANSFER PROTOCOLS Engine
-        // ====================================================
         function openPauseModal() {
             const serial = document.getElementById('ins-serial').value.trim();
             if (!serial) {
@@ -1035,7 +1023,6 @@
                 timestamp: Date.now()
             };
 
-            // Save state package into local and cloud spaces
             localPausedCache[serial.toUpperCase()] = pauseSessionPackage;
             localStorage.setItem('inspectflow_paused', JSON.stringify(localPausedCache));
 
@@ -1047,7 +1034,6 @@
                 showToast("Session locked locally inside current terminal (Offline Mode).", "warning");
             }
 
-            // Wipe workbench cleanly
             document.getElementById('ins-serial').value = '';
             document.getElementById('ins-template-select').value = '';
             document.getElementById('dynamic-form-card').style.display = 'none';
@@ -1078,7 +1064,6 @@
                 return;
             }
 
-            // Internal helper closure to load data onto workbench if checked
             const loadSession = (sessionData) => {
                 if (sessionData.pin !== enteredPin) {
                     showToast("Authentication Failed: Invalid PIN entry.", "danger");
@@ -1091,7 +1076,6 @@
 
                 loadInspectionForm(sessionData);
                 
-                // Purge active key once claimed to avoid duplicate entries
                 delete localPausedCache[targetSerial];
                 localStorage.setItem('inspectflow_paused', JSON.stringify(localPausedCache));
                 if (remoteDB) remoteDB.ref('paused_sessions/' + targetSerial).remove();
@@ -1100,7 +1084,6 @@
                 closeResumeModal();
             };
 
-            // Double check live DB if online to allow multi-device handoffs
             if (remoteDB) {
                 remoteDB.ref('paused_sessions/' + targetSerial).once('value')
                     .then((snapshot) => {
@@ -1129,9 +1112,6 @@
             }
         }
 
-        // ====================================================
-        // CONSOLIDATION & EXTRACTION MODULES Engine
-        // ====================================================
         function saveCurrentInspection() {
             const inspector = document.getElementById('ins-inspector').value;
             const templateId = document.getElementById('ins-template-select').value;
