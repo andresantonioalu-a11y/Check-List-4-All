@@ -298,12 +298,18 @@
             font-weight: 600;
             color: var(--text-muted);
             display: flex;
-            align-items: center;
-            gap: 6px;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
         }
 
         .camera-status-indicator.captured { color: var(--success); }
-        .camera-status-indicator.skipped { color: #64748b; }
+        .camera-status-indicator .photo-filename-label {
+            font-size: 11px;
+            color: var(--accent);
+            font-family: monospace;
+            display: block;
+        }
 
         #toast-container {
             position: fixed;
@@ -338,11 +344,6 @@
         .badge-accent { background-color: #e0f2fe; color: #0369a1; }
         .badge-warning { background-color: #fef3c7; color: #d97706; }
 
-        .report-summary-card { border-left: 4px solid var(--border); }
-        .report-summary-card.pass { border-left-color: var(--success); }
-        .report-summary-card.fail { border-left-color: var(--danger); }
-
-        /* MODAL STYLES */
         .custom-modal {
             display: none;
             position: fixed;
@@ -364,19 +365,7 @@
             width: 90%;
             box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);
         }
-        .modal-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: var(--primary);
-        }
-        .action-flex-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        /* LIVE CAMERA VIEWFINDER OVERLAY */
+        
         #hardware-viewfinder-modal {
             display: none;
             position: fixed;
@@ -397,13 +386,23 @@
             text-align: center;
             width: 100%;
         }
-        .viewfinder-header h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+        .viewfinder-header h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; color: #38bdf8; }
         .viewfinder-header p { font-size: 12px; color: #94a3b8; }
+        .viewfinder-filename-preview {
+            background: rgba(255,255,255,0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: monospace;
+            color: #f43f5e;
+            margin-top: 6px;
+            display: inline-block;
+        }
 
         .viewfinder-container {
             width: 100%;
             max-width: 480px;
-            height: 60vh;
+            height: 65vh;
             border-radius: 12px;
             overflow: hidden;
             border: 2px solid #334155;
@@ -452,9 +451,22 @@
                 <div class="card-title">Unit Base Profile Data</div>
                 
                 <div class="form-group">
-                    <label for="ins-inspector">Assigned Inspector</label>
-                    <select id="ins-inspector">
+                    <label for="ins-inspector">Assigned Inspector (Start Activity)</label>
+                    <select id="ins-inspector" onchange="autoSaveActiveFormState()">
                         <option value="">-- Select Inspector --</option>
+                        <option value="Alex Vazquez">Alex Vazquez (Leak Check)</option>
+                        <option value="Andreina Yanez">Andreina Yanez (Final Inspection)</option>
+                        <option value="Darrick Alvarez">Darrick Alvarez (Leak Check)</option>
+                        <option value="Estefany C.">Estefany C. (Final Inspection)</option>
+                        <option value="Franco Conti">Franco Conti (Leak Check)</option>
+                        <option value="Luis Sanchez">Luis Sanchez (Final Inspection)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="ins-inspector-end">Closing Inspector (Finishes Activity)</label>
+                    <select id="ins-inspector-end" onchange="autoSaveActiveFormState()">
+                        <option value="">-- Select Closing Inspector --</option>
                         <option value="Alex Vazquez">Alex Vazquez (Leak Check)</option>
                         <option value="Andreina Yanez">Andreina Yanez (Final Inspection)</option>
                         <option value="Darrick Alvarez">Darrick Alvarez (Leak Check)</option>
@@ -472,8 +484,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="ins-serial">Unit Serial Number</label>
-                    <input type="text" id="ins-serial" placeholder="e.g., DOAS-2026-XYZ123" required>
+                    <label for="ins-serial">Work Order / Serial Number</label>
+                    <input type="text" id="ins-serial" placeholder="e.g., 260205560001" oninput="autoSaveActiveFormState()">
                 </div>
 
                 <button class="btn btn-secondary btn-block" style="margin-top: 5px;" onclick="openResumeModal()">
@@ -558,7 +570,7 @@
                 <div class="card-title">Captured Factory Audit Reports</div>
                 <div style="margin-bottom: 15px; display: flex; gap: 10px;">
                     <button class="btn btn-success btn-block" onclick="exportAllToZip()">
-                        📦 Download Data Package (ZIP + Evidence Files)
+                        📦 Download Data Package (ZIP + Structured Folders)
                     </button>
                 </div>
                 <div class="items-list" id="saved-reports-list"></div>
@@ -576,7 +588,7 @@
         <div class="modal-content">
             <div class="modal-title">Pause Inspection Session</div>
             <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">
-                Enter a 4-digit security PIN. You or any other inspector can resume this progress from any terminal using the unit's Serial Number and this PIN.
+                Enter a 4-digit security PIN to hold progress.
             </p>
             <div class="form-group">
                 <label for="pause-pin">Set 4-Digit PIN</label>
@@ -594,8 +606,8 @@
         <div class="modal-content">
             <div class="modal-title">Resume Paused Inspection</div>
             <div class="form-group">
-                <label for="resume-serial">Unit Serial Number</label>
-                <input type="text" id="resume-serial" placeholder="e.g., DOAS-2026-XYZ123">
+                <label for="resume-serial">Work Order Number</label>
+                <input type="text" id="resume-serial" placeholder="e.g., 260205560001">
             </div>
             <div class="form-group">
                 <label for="resume-pin">Enter Security PIN</label>
@@ -608,11 +620,12 @@
         </div>
     </div>
 
-    <!-- INTERFAZ INTERACTIVA COMPLETA DE CÁMARA (INTERSECCIÓN DOM) -->
+    <!-- LIVE CAMERA VIEWFINDER OVERLAY -->
     <div id="hardware-viewfinder-modal">
         <div class="viewfinder-header">
             <h3 id="viewfinder-title-label">Camera Verification Mode</h3>
             <p>Align the mechanical checkpoint inside the viewfinder</p>
+            <div class="viewfinder-filename-preview" id="filename-preview-box">Target: file_preview.jpg</div>
         </div>
         <div class="viewfinder-container">
             <video id="active-lens-video" autoplay playsinline></video>
@@ -672,6 +685,7 @@
             renderTemplatesList();
             renderReportsList();
             updateFormTemplateDropdown();
+            checkAndRecoverCrashState();
         };
 
         function showToast(message, type = 'info') {
@@ -741,6 +755,65 @@
             });
         }
 
+        // CONTROL DE PERSISTENCIA INMEDIATA ANTE CAÍDAS O REFRESCOS
+        function autoSaveActiveFormState() {
+            const templateId = document.getElementById('ins-template-select').value;
+            if (!templateId) return;
+
+            const serial = document.getElementById('ins-serial').value.trim();
+            const inspector = document.getElementById('ins-inspector').value;
+            const inspectorEnd = document.getElementById('ins-inspector-end').value;
+
+            const template = localTemplatesCache.find(t => t.id === templateId);
+            let collectedAnswers = {};
+
+            template.fields.forEach(f => {
+                const radios = document.getElementsByName(`status_${f.id}`);
+                let selectedVal = null;
+                radios.forEach(r => { if(r.checked) selectedVal = r.value; });
+                const comment = document.getElementById(`comment_${f.id}`) ? document.getElementById(`comment_${f.id}`).value.trim() : '';
+
+                collectedAnswers[f.id] = { status: selectedVal, comment: comment };
+            });
+
+            const crashSafetyBuffer = {
+                serial: serial,
+                templateId: templateId,
+                inspector: inspector,
+                inspectorEnd: inspectorEnd,
+                answers: collectedAnswers,
+                photos: currentActivePhotos, // Mantiene los binarios a salvo en el localStorage
+                timestamp: Date.now()
+            };
+
+            localStorage.setItem('inspectflow_crash_buffer', JSON.stringify(crashSafetyBuffer));
+        }
+
+        function checkAndRecoverCrashState() {
+            const rawBuffer = localStorage.getItem('inspectflow_crash_buffer');
+            if (!rawBuffer) return;
+
+            try {
+                const backup = JSON.parse(rawBuffer);
+                // Si la sesión colapsó hace menos de 2 horas, recuperarla automáticamente
+                if (Date.now() - backup.timestamp < 7200000) {
+                    showToast("⚠️ Se detectó un cierre inesperado. Recuperando fotos y datos...", "warning");
+                    
+                    document.getElementById('ins-template-select').value = backup.templateId;
+                    document.getElementById('ins-serial').value = backup.serial;
+                    document.getElementById('ins-inspector').value = backup.inspector || '';
+                    document.getElementById('ins-inspector-end').value = backup.inspectorEnd || '';
+
+                    currentActivePhotos = backup.photos || {};
+                    loadInspectionForm(backup);
+                } else {
+                    localStorage.removeItem('inspectflow_crash_buffer');
+                }
+            } catch (e) {
+                console.error("Error al restaurar caché de seguridad:", e);
+            }
+        }
+
         function addBuilderRow() {
             const container = document.getElementById('builder-fields-container');
             if (!container) return;
@@ -796,30 +869,13 @@
 
             if (remoteDB) {
                 remoteDB.ref('templates/' + newTemplate.id).set(newTemplate)
-                    .then(() => showToast("Inspection checklist successfully published to central cloud server", "success"))
+                    .then(() => showToast("Checklist successfully published to cloud", "success"))
                     .catch(() => showToast("Saved to offline cache buffer", "warning"));
             } else {
-                showToast("Checklist archived in local terminal memory (Offline Mode)", "warning");
+                showToast("Checklist archived in local terminal memory", "warning");
             }
 
             document.getElementById('tmpl-name').value = '';
-            document.getElementById('builder-fields-container').innerHTML = `
-                <div class="builder-row">
-                    <div style="flex: 2;">
-                        <label>Question / Control Point</label>
-                        <input type="text" class="field-question-input" placeholder="e.g., Check structural compressor bolt torque">
-                    </div>
-                    <div style="flex: 1;">
-                        <label>Section</label>
-                        <input type="text" class="field-section-input" placeholder="e.g., Mechanical Assembly">
-                    </div>
-                    <div style="flex: 1;">
-                        <label>Spec / Tolerance Alert</label>
-                        <input type="text" class="field-spec-input" placeholder="e.g., 45 ft-lbs">
-                    </div>
-                    <button class="btn btn-danger btn-icon" style="margin-top: 25px;" onclick="this.parentElement.remove()">✕</button>
-                </div>
-            `;
             renderTemplatesList();
             updateFormTemplateDropdown();
         }
@@ -828,7 +884,7 @@
             const list = document.getElementById('admin-templates-list');
             if (!list) return;
             if (localTemplatesCache.length === 0) {
-                list.innerHTML = '<div class="list-item"><p>No checklist structures registered on terminal.</p></div>';
+                list.innerHTML = '<div class="list-item"><p>No checklist structures registered.</p></div>';
                 return;
             }
             list.innerHTML = '';
@@ -847,10 +903,10 @@
         }
 
         function deleteTemplate(id) {
-            if(!confirm("Purge checklist blueprint infrastructure from main log?")) return;
+            if(!confirm("Purge checklist blueprint infrastructure?")) return;
             localTemplatesCache = localTemplatesCache.filter(t => t.id !== id);
             localStorage.setItem('inspectflow_templates', JSON.stringify(localTemplatesCache));
-            if (remoteDB) remoteDB.ref('templates/' + id).remove().then(() => showToast("Blueprint purged from cloud system infrastructure", "success"));
+            if (remoteDB) remoteDB.ref('templates/' + id).remove().then(() => showToast("Blueprint purged from cloud system", "success"));
             renderTemplatesList();
             updateFormTemplateDropdown();
         }
@@ -884,13 +940,14 @@
 
             formCard.style.display = 'block';
             pauseBtn.style.display = 'block';
-            document.getElementById('dynamic-form-title').innerText = `Active Checklist Execution Protocol: ${template.name}`;
+            document.getElementById('dynamic-form-title').innerText = `Active Protocol: ${template.name}`;
             container.innerHTML = '';
             
             if (preloadedState) {
                 currentActivePhotos = preloadedState.photos || {};
             } else {
                 currentActivePhotos = {};
+                localStorage.removeItem('inspectflow_crash_buffer'); // Limpiar sesión previa si abre una limpia
             }
             abortHardwareStreaming();
 
@@ -927,8 +984,8 @@
                         savedComment = preloadedState.answers[field.id].comment || '';
                     }
 
-                    if (currentActivePhotos[field.id] && currentActivePhotos[field.id].length > 0) {
-                        photoLabel = '🟢 Photo Captured';
+                    if (currentActivePhotos[field.id]) {
+                        photoLabel = `🟢 Photo Captured:<br><span class="photo-filename-label">${currentActivePhotos[field.id].filename}</span>`;
                         photoClass = 'captured';
                         takeBtnText = 'Re-take Picture';
                         takeBtnClass = 'btn btn-danger btn-icon';
@@ -942,15 +999,15 @@
                             </div>
                             <div class="radio-options">
                                 <label class="radio-label pass-label">
-                                    <input type="radio" name="status_${field.id}" value="PASS" ${passChecked} onchange="evaluateFormCounters()"> PASS
+                                    <input type="radio" name="status_${field.id}" value="PASS" ${passChecked} onchange="autoSaveActiveFormState(); evaluateFormCounters()"> PASS
                                 </label>
                                 <label class="radio-label fail-label">
-                                    <input type="radio" name="status_${field.id}" value="FAIL" ${failChecked} onchange="evaluateFormCounters()"> FAIL
+                                    <input type="radio" name="status_${field.id}" value="FAIL" ${failChecked} onchange="autoSaveActiveFormState(); evaluateFormCounters()"> FAIL
                                 </label>
                             </div>
                         </div>
                         <div class="form-group">
-                            <input type="text" id="comment_${field.id}" value="${savedComment}" placeholder="Enter specific measurement readings, torque feedback or anomaly notes...">
+                            <input type="text" id="comment_${field.id}" value="${savedComment}" oninput="autoSaveActiveFormState()" placeholder="Enter measurements, readings or anomaly notes...">
                         </div>
                         
                         <div class="simplified-camera-zone">
@@ -969,14 +1026,27 @@
             evaluateFormCounters();
         }
 
-        // CONTROL DE FLUJO INTERACTIVO (VISOR COMPLETO ACTIVO)
         async function openHardwareViewfinder(fieldId) {
+            const serial = document.getElementById('ins-serial').value.trim();
+            const inspector = document.getElementById('ins-inspector').value;
+
+            if (!serial || !inspector) {
+                showToast("Work Order and Assigned Inspector are required BEFORE taking photos to structure the filename.", "danger");
+                return;
+            }
+
             activeFieldTargetId = fieldId;
             const overlay = document.getElementById('hardware-viewfinder-modal');
             const video = document.getElementById('active-lens-video');
+            const previewBox = document.getElementById('filename-preview-box');
             
+            const cleanInspector = inspector.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const today = new Date();
+            const dateStr = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear()}`;
+            const computedFilename = `${serial}${cleanInspector}${dateStr}.jpg`;
+
+            previewBox.innerText = `Filename: ${computedFilename}`;
             overlay.style.display = 'flex';
-            showToast("Initializing camera stream...", "info");
 
             try {
                 if (globalCameraStream) {
@@ -993,13 +1063,11 @@
                 });
 
                 video.srcObject = globalCameraStream;
-                
-                // Forzar reproducción inmediata sobre elemento 100% visible
                 await video.play();
 
             } catch (err) {
-                console.error("Viewfinder initialization failed:", err);
-                showToast("Failed to lock hardware stream. Check browser security settings.", "danger");
+                console.error("Viewfinder failed:", err);
+                showToast("Failed to lock hardware stream. Check camera permissions.", "danger");
                 abortHardwareStreaming();
             }
         }
@@ -1011,24 +1079,36 @@
             const canvas = document.getElementById('hidden-bg-canvas');
             const statusLabel = document.getElementById(`cam_status_${activeFieldTargetId}`);
             const takeBtn = document.getElementById(`btn_take_${activeFieldTargetId}`);
+            const serial = document.getElementById('ins-serial').value.trim();
+            const inspector = document.getElementById('ins-inspector').value;
 
             try {
                 const context = canvas.getContext('2d');
                 canvas.width = video.videoWidth || 640;
                 canvas.height = video.videoHeight || 480;
                 
-                // Mapeo directo de fotograma renderizado
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
 
-                currentActivePhotos[activeFieldTargetId] = [dataUrl];
+                const cleanInspector = inspector.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const today = new Date();
+                const dateStr = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear()}`;
+                const finalName = `${serial}${cleanInspector}${dateStr}.jpg`;
+
+                currentActivePhotos[activeFieldTargetId] = {
+                    filename: finalName,
+                    blobData: dataUrl
+                };
+
+                // GUARDADO INMEDIATO EN DISPOSITIVO: Si se apaga el teléfono, la foto ya está a salvo.
+                autoSaveActiveFormState();
 
                 statusLabel.className = "camera-status-indicator captured";
-                statusLabel.innerHTML = `<span>🟢 Photo Captured</span>`;
+                statusLabel.innerHTML = `<span>🟢 Photo Captured:<br><span class="photo-filename-label">${finalName}</span></span>`;
                 takeBtn.innerText = "Re-take Picture";
                 takeBtn.className = "btn btn-danger btn-icon";
                 
-                showToast("Evidence snapshot captured successfully", "success");
+                showToast("Evidence snapshot captured & securely written to local memory", "success");
                 abortHardwareStreaming();
 
             } catch (err) {
@@ -1056,12 +1136,13 @@
             const takeBtn = document.getElementById('btn_take_' + fieldId);
             
             delete currentActivePhotos[fieldId];
+            autoSaveActiveFormState();
             
-            statusLabel.className = "camera-status-indicator skipped";
+            statusLabel.className = "camera-status-indicator";
             statusLabel.innerHTML = `<span>⚪ Skipped</span>`;
             takeBtn.innerText = "Take Picture";
             takeBtn.className = "btn btn-secondary btn-icon";
-            showToast("Evidence parameter marked as bypassed", "info");
+            showToast("Evidence marked as bypassed", "info");
         }
 
         function evaluateFormCounters() {
@@ -1085,7 +1166,7 @@
         function openPauseModal() {
             const serial = document.getElementById('ins-serial').value.trim();
             if (!serial) {
-                showToast("A Unit Serial Number is required to hold structural states.", "danger");
+                showToast("A Work Order Number is required to hold structural states.", "danger");
                 return;
             }
             document.getElementById('pause-pin').value = '';
@@ -1101,6 +1182,7 @@
             const serial = document.getElementById('ins-serial').value.trim();
             const templateId = document.getElementById('ins-template-select').value;
             const inspector = document.getElementById('ins-inspector').value;
+            const inspectorEnd = document.getElementById('ins-inspector-end').value;
 
             if (pin.length !== 4 || isNaN(pin)) {
                 showToast("Security PIN validation abort: Exactly 4 digits required.", "danger");
@@ -1123,6 +1205,7 @@
                 serial: serial,
                 templateId: templateId,
                 inspector: inspector,
+                inspectorEnd: inspectorEnd,
                 pin: pin,
                 answers: collectedAnswers,
                 photos: currentActivePhotos,
@@ -1133,21 +1216,20 @@
             localStorage.setItem('inspectflow_paused', JSON.stringify(localPausedCache));
 
             if (remoteDB) {
-                remoteDB.ref('paused_sessions/' + serial.toUpperCase()).set(pauseSessionPackage)
-                    .then(() => showToast("State uploaded. Session locked to Cloud registry.", "success"))
+                const cloudPauseCopy = JSON.parse(JSON.stringify(pauseSessionPackage));
+                for(let fid in cloudPauseCopy.photos) {
+                    cloudPauseCopy.photos[fid].blobData = "[Stored Locally on Terminal Device]";
+                }
+                remoteDB.ref('paused_sessions/' + serial.toUpperCase()).set(cloudPauseCopy)
+                    .then(() => showToast("Session state locked to Cloud metadata registry.", "success"))
                     .catch(() => showToast("Session locked locally inside current terminal.", "warning"));
             } else {
                 showToast("Session locked locally inside current terminal (Offline Mode).", "warning");
             }
 
-            document.getElementById('ins-serial').value = '';
-            document.getElementById('ins-template-select').value = '';
-            document.getElementById('dynamic-form-card').style.display = 'none';
-            document.getElementById('btn-global-pause').style.display = 'none';
-            document.getElementById('dynamic-fields-container').innerHTML = '';
-            currentActivePhotos = {};
-            evaluateFormCounters();
-            abortHardwareStreaming();
+            // Al estar pausado formalmente, limpiamos el buffer temporal de caídas
+            localStorage.removeItem('inspectflow_crash_buffer');
+            resetInspectionScreen();
             closePauseModal();
         }
 
@@ -1166,7 +1248,7 @@
             const enteredPin = document.getElementById('resume-pin').value.trim();
 
             if (!targetSerial || !enteredPin) {
-                showToast("Please provide both Serial Identifier and Security PIN.", "danger");
+                showToast("Please provide both Work Order and Security PIN.", "danger");
                 return;
             }
 
@@ -1179,6 +1261,11 @@
                 document.getElementById('ins-serial').value = sessionData.serial;
                 document.getElementById('ins-template-select').value = sessionData.templateId;
                 document.getElementById('ins-inspector').value = sessionData.inspector || '';
+                document.getElementById('ins-inspector-end').value = sessionData.inspectorEnd || '';
+
+                if(localPausedCache[targetSerial] && localPausedCache[targetSerial].photos) {
+                    sessionData.photos = localPausedCache[targetSerial].photos;
+                }
 
                 loadInspectionForm(sessionData);
                 
@@ -1186,7 +1273,8 @@
                 localStorage.setItem('inspectflow_paused', JSON.stringify(localPausedCache));
                 if (remoteDB) remoteDB.ref('paused_sessions/' + targetSerial).remove();
 
-                showToast("Authentication Success! Progress restored to workbench.", "success");
+                autoSaveActiveFormState(); // Inicializar el crash protector para la sesión restaurada
+                showToast("Authentication Success! Progress restored.", "success");
                 closeResumeModal();
             };
 
@@ -1199,7 +1287,7 @@
                         } else if (localPausedCache[targetSerial]) {
                             loadSession(localPausedCache[targetSerial]);
                         } else {
-                            showToast("No suspended data found matching this Serial Number.", "danger");
+                            showToast("No suspended data found matching this Work Order.", "danger");
                         }
                     })
                     .catch(() => {
@@ -1213,18 +1301,19 @@
                 if (localPausedCache[targetSerial]) {
                     loadSession(localPausedCache[targetSerial]);
                 } else {
-                    showToast("No matched session structural data inside offline cache registry.", "danger");
+                    showToast("No matched session data inside offline cache registry.", "danger");
                 }
             }
         }
 
         function saveCurrentInspection() {
             const inspector = document.getElementById('ins-inspector').value;
+            const inspectorEnd = document.getElementById('ins-inspector-end').value;
             const templateId = document.getElementById('ins-template-select').value;
             const serial = document.getElementById('ins-serial').value.trim();
 
-            if (!inspector || !templateId || !serial) {
-                showToast("Please ensure Inspector Profile, Checklist Selection, and Serial inputs are filled", "danger");
+            if (!inspector || !inspectorEnd || !templateId || !serial) {
+                showToast("Please ensure Initial Inspector, Closing Inspector, Checklist, and Work Order are filled.", "danger");
                 return;
             }
 
@@ -1247,6 +1336,8 @@
                 }
 
                 const comment = document.getElementById(`comment_${f.id}`).value.trim();
+                const hasPhotoAttached = currentActivePhotos[f.id] ? true : false;
+                const assignedFilename = currentActivePhotos[f.id] ? currentActivePhotos[f.id].filename : "N/A";
 
                 evaluationResults.push({
                     fieldId: f.id,
@@ -1254,12 +1345,13 @@
                     section: f.section,
                     status: selectedVal,
                     comment: comment,
-                    photos: currentActivePhotos[f.id] || []
+                    photoAttached: hasPhotoAttached,
+                    photoName: assignedFilename
                 });
             });
 
             if (!formsValid) {
-                showToast("Audit validation protocol aborted: Please review and sign off all checklist items", "danger");
+                showToast("Audit protocol aborted: Please review and sign off all checklist items.", "danger");
                 return;
             }
 
@@ -1267,14 +1359,16 @@
             const finalizedReport = {
                 id: reportId,
                 serial: serial,
-                inspector: inspector,
+                inspectorStart: inspector,
+                inspectorEnd: inspectorEnd,
                 templateId: templateId,
                 templateName: template.name,
                 department: template.dept,
                 status: globalUnitStatus,
                 results: evaluationResults,
                 timestamp: Date.now(),
-                synced: false
+                synced: false,
+                localBinaryPhotos: currentActivePhotos 
             };
 
             localReportsCache.push(finalizedReport);
@@ -1283,6 +1377,8 @@
             if (remoteDB) {
                 const cloudCopy = JSON.parse(JSON.stringify(finalizedReport));
                 cloudCopy.synced = true;
+                if (cloudCopy.localBinaryPhotos) delete cloudCopy.localBinaryPhotos; 
+
                 remoteDB.ref('reports/' + reportId).set(cloudCopy)
                     .then(() => {
                         const idx = localReportsCache.findIndex(r => r.id === reportId);
@@ -1290,18 +1386,24 @@
                             localReportsCache[idx].synced = true;
                             localStorage.setItem('inspectflow_reports', JSON.stringify(localReportsCache));
                         }
-                        showToast("Inspection execution logged and synced to cloud hub", "success");
+                        showToast("Inspection logged and metadata synced to cloud safely.", "success");
                         renderReportsList();
                     })
                     .catch(() => {
-                        showToast("Report cached safely to unit terminal buffer memory", "warning");
+                        showToast("Report cached safely to unit terminal buffer memory.", "warning");
                         renderReportsList();
                     });
             } else {
-                showToast("Audit report generated and compiled locally inside standalone system", "warning");
+                showToast("Audit report generated and compiled locally.", "warning");
                 renderReportsList();
             }
 
+            // Finalización exitosa: removemos el buffer temporal de crash
+            localStorage.removeItem('inspectflow_crash_buffer');
+            resetInspectionScreen();
+        }
+
+        function resetInspectionScreen() {
             document.getElementById('ins-serial').value = '';
             document.getElementById('ins-template-select').value = '';
             document.getElementById('dynamic-form-card').style.display = 'none';
@@ -1324,20 +1426,21 @@
             sorted.forEach(r => {
                 const item = document.createElement('div');
                 const badgeClass = r.status === 'PASS' ? 'badge-success' : 'badge-danger';
-                const cardClass = r.status === 'PASS' ? 'pass' : 'fail';
-                const syncBadge = r.synced ? '<span class="badge badge-accent">Cloud</span>' : '<span class="badge badge-warning">Local</span>';
-                const dateStr = new Date(r.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const syncBadge = r.synced ? '<span class="badge badge-accent">Cloud Metadata</span>' : '<span class="badge badge-warning">Local Only</span>';
+                const dateStr = new Date(r.timestamp).toLocaleDateString() + ' ' + new Date(r.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const totalPhotos = r.localBinaryPhotos ? Object.keys(r.localBinaryPhotos).length : 0;
 
-                item.className = `list-item report-summary-card ${cardClass}`;
+                item.className = `list-item`;
                 item.innerHTML = `
                     <div class="item-info">
-                        <h4>Unit SN: ${r.serial}</h4>
-                        <p>${dateStr} | Operator: <strong>${r.inspector}</strong> | Dept: ${r.department}</p>
+                        <h4>Work Order: ${r.serial}</h4>
+                        <p>${dateStr} | Started: <strong>${r.inspectorStart}</strong> | Closed: <strong>${r.inspectorEnd}</strong></p>
+                        <p style="font-size:12px; color:var(--accent);">Media attached: ${totalPhotos} local image(s)</p>
                     </div>
-                    <div class="actions-cell">
+                    <div class="actions-cell" style="display:flex; align-items:center; gap:8px;">
                         <span class="badge ${badgeClass}">${r.status}</span>
                         ${syncBadge}
-                        <button class="btn btn-danger btn-icon" style="padding:2px 6px;" onclick="deleteReport('${r.id}')">✕</button>
+                        <button class="btn btn-danger" style="padding:4px 8px; font-size:11px;" onclick="deleteReport('${r.id}')">✕</button>
                     </div>
                 `;
                 list.appendChild(item);
@@ -1345,46 +1448,56 @@
         }
 
         function deleteReport(id) {
-            if(!confirm("Purge audit report history completely from local database?")) return;
+            if(!confirm("Purge report record and its local images completely?")) return;
             localReportsCache = localReportsCache.filter(r => r.id !== id);
             localStorage.setItem('inspectflow_reports', JSON.stringify(localReportsCache));
-            if (remoteDB) remoteDB.ref('reports/' + id).remove().then(() => showToast("Record removed from remote system logs", "success"));
+            if (remoteDB) remoteDB.ref('reports/' + id).remove().then(() => showToast("Record removed from cloud log index.", "success"));
             renderReportsList();
         }
 
         function exportAllToZip() {
             if (localReportsCache.length === 0) {
-                showToast("No active data entries discovered to structure data payload", "danger");
+                showToast("No active data entries discovered to structure data payload.", "danger");
                 return;
             }
             const zip = new JSZip();
             let csvContent = "\uFEFF";
-            csvContent += "Report ID,Unit Serial Number,Inspector,Department,Template Baseline,Unit Evaluation Result,Timestamp,Criteria ID,Control Checklist Line,Process Section,Line Status,Inspector Remarks,Attached Image Context\n";
+            csvContent += "Report ID,Work Order Serial,Inspector Init,Inspector End,Department,Template Baseline,Unit Result,Timestamp,Control Point,Section,Status,Remarks,Attached Image Filename\n";
 
             localReportsCache.forEach(r => {
                 const dateStr = new Date(r.timestamp).toLocaleString();
+                const cleanInspectorFolder = r.inspectorEnd.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const folderName = `${r.serial}_${cleanInspectorFolder}`;
+
                 r.results.forEach(res => {
                     const cleanComment = (res.comment || "").replace(/"/g, '""');
-                    const hasPhotos = res.photos && res.photos.length > 0 ? `${res.photos.length} Photo(s)` : "No Photo Attached";
-                    
-                    csvContent += `"${r.id}","${r.serial}","${r.inspector}","${r.department}","${r.templateName}","${r.status}","${dateStr}","${res.fieldId}","${res.question}","${res.section}","${res.status}","${cleanComment}","${hasPhotos}"\n`;
-                    
-                    if (res.photos && res.photos.length > 0) {
-                        res.photos.forEach((base64Data, pIdx) => {
-                            const byteString = atob(base64Data.split(',')[1]);
-                            const ab = new ArrayBuffer(byteString.length);
-                            const ia = new Uint8Array(ab);
-                            for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-                            const blob = new Blob([ab], { type: 'image/jpeg' });
-                            const cleanSection = res.section.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-                            zip.file(`QUALITY_EVIDENCE_PACK/UNIT_SN_${r.serial}/${cleanSection}_criteria_evidence_${pIdx + 1}.jpg`, blob);
-                        });
-                    }
+                    csvContent += `"${r.id}","${r.serial}","${r.inspectorStart}","${r.inspectorEnd}","${r.department}","${r.templateName}","${r.status}","${dateStr}","${res.question}","${res.section}","${res.status}","${cleanComment}","${res.photoName}"\n`;
                 });
+
+                if (r.localBinaryPhotos && Object.keys(r.localBinaryPhotos).length > 0) {
+                    for (let fid in r.localBinaryPhotos) {
+                        const imgObj = r.localBinaryPhotos[fid];
+                        if (imgObj && imgObj.blobData && imgObj.blobData.includes(',')) {
+                            try {
+                                const byteString = atob(imgObj.blobData.split(',')[1]);
+                                const ab = new ArrayBuffer(byteString.length);
+                                const ia = new Uint8Array(ab);
+                                for (let i = 0; i < byteString.length; i++) {
+                                    ia[i] = byteString.charCodeAt(i);
+                                }
+                                const blob = new Blob([ab], { type: 'image/jpeg' });
+                                zip.file(`${folderName}/${imgObj.filename}`, blob);
+                            } catch (e) {
+                                console.error("Error packaging binary image:", e);
+                            }
+                        }
+                    }
+                }
             });
 
             zip.file("CONSOLIDATED_QUALITY_LOG_AUDIT.csv", csvContent);
-            showToast("Assembling media files and binary arrays... Please stand by", "info");
+            showToast("Assembling structured folders and binary arrays... Please wait.", "info");
+            
             zip.generateAsync({ type: "blob" }).then(function(content) {
                 const link = document.createElement("a");
                 link.href = URL.createObjectURL(content);
@@ -1392,7 +1505,7 @@
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                showToast("ZIP master packet downloaded successfully", "success");
+                showToast("ZIP master folder package downloaded successfully!", "success");
             });
         }
     </script>
