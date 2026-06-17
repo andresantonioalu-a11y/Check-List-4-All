@@ -236,7 +236,6 @@
         let temporaryCapturedDataUrl = null;
 
         window.onload = function() {
-            // Checklist definition cache
             localTemplatesCache = [
                 {
                     id: "tmpl_leak_check",
@@ -251,7 +250,7 @@
                 }
             ];
             updateFormTemplateDropdown();
-            renderAdminDashboard(); // Render Admin View data immediately on boot
+            renderAdminDashboard();
         };
 
         function showToast(message, type = 'info') {
@@ -271,7 +270,6 @@
             document.getElementById(viewId).classList.add('active');
             if (clickedButton) clickedButton.classList.add('active');
             
-            // If admin clicks dashboard tab, force-refresh the data rendering
             if (viewId === 'admin-view') {
                 renderAdminDashboard();
             }
@@ -285,7 +283,6 @@
             });
         }
 
-        /* FIXED FUNCTION: Renders the Admin view dynamically */
         function renderAdminDashboard() {
             const adminContainer = document.getElementById('admin-templates-list');
             if (!adminContainer) return;
@@ -415,17 +412,17 @@
             document.getElementById(`cam_status_${activeFieldTargetId}`).innerHTML = '<span>No Photo Attached</span>';
             document.getElementById(`preview_container_${activeFieldTargetId}`).style.display = 'none';
             backupCurrentStateToLocalStorage();
-            showToast("Photo constraint bypassed.", "warning");
+            showToast("Photo requirement bypassed.", "warning");
             closeHardwareStreaming();
         }
 
+        UX for mobile inspection tool. Source tracking configured.
         function renderPhotoThumbnailInField(fieldId, src, name) {
             document.getElementById(`cam_status_${fieldId}`).innerHTML = `<span class="photo-filename-label">🟢 Linked: ${name}</span>`;
             document.getElementById(`img_preview_${fieldId}`).src = src;
             document.getElementById(`preview_container_${fieldId}`).style.display = 'block';
         }
 
-        UX for mobile inspection tool. Source tracking configured.
         function closeHardwareStreaming() {
             document.getElementById('hardware-viewfinder-modal').style.display = 'none';
             if (globalCameraStream) { globalCameraStream.getTracks().forEach(t => t.stop()); globalCameraStream = null; }
