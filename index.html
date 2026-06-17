@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InspectFlow Pro - Quality Inspection System</title>
     
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <style>
@@ -33,7 +30,7 @@
         .logo-area span { font-size: 11px; color: #94a3b8; display: block; }
         
         .connection-status { font-size: 12px; padding: 4px 10px; border-radius: 12px; display: flex; align-items: center; gap: 6px; }
-        .connection-status.online { background-color: rgba(22, 163, 74, 0.2); color: #4ade80; }
+        .connection-status.local-secure { background-color: rgba(22, 163, 74, 0.2); color: #4ade80; }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; background-color: currentColor; }
 
         .role-nav { display: flex; background-color: var(--primary-light); padding: 0 10px; }
@@ -104,9 +101,9 @@
             <h1>InspectFlow Pro</h1>
             <span>DOAS Units, Leak Check & Final Inspection</span>
         </div>
-        <div id="connection-indicator" class="connection-status online">
+        <div id="connection-indicator" class="connection-status local-secure">
             <div class="status-dot"></div>
-            <span id="connection-text">Cloud Sync Connected</span>
+            <span id="connection-text">LocalStorage Offline Secure</span>
         </div>
     </header>
 
@@ -118,54 +115,56 @@
     <div id="inspector-view" class="view-panel active">
         <div class="grid-2">
             <div class="card">
-                <div class="card-title">Unit Profile Header</div>
-                
-                <div class="form-group">
-                    <label for="ins-inspector">Starting Inspector</label>
-                    <select id="ins-inspector" onchange="backupCurrentStateToLocalStorage()">
-                        <option value="">-- Select Inspector --</option>
-                        <option value="Alex Vazquez">Alex Vazquez (Leak Check)</option>
-                        <option value="Andreina Yanez">Andreina Yanez (Final Inspection)</option>
-                        <option value="Darrick Alvarez">Darrick Alvarez (Leak Check)</option>
-                        <option value="Estefany C.">Estefany C. (Final Inspection)</option>
-                        <option value="Franco Conti">Franco Conti (Leak Check)</option>
-                        <option value="Luis Sanchez">Luis Sanchez (Final Inspection)</option>
-                    </select>
-                </div>
+                <div class="unit-profile-zone">
+                    <div class="card-title">Unit Profile Header</div>
+                    
+                    <div class="form-group">
+                        <label for="ins-inspector">Starting Inspector</label>
+                        <select id="ins-inspector" onchange="backupCurrentStateToLocalStorage()">
+                            <option value="">-- Select Inspector --</option>
+                            <option value="Alex Vazquez">Alex Vazquez (Leak Check)</option>
+                            <option value="Andreina Yanez">Andreina Yanez (Final Inspection)</option>
+                            <option value="Darrick Alvarez">Darrick Alvarez (Leak Check)</option>
+                            <option value="Estefany C.">Estefany C. (Final Inspection)</option>
+                            <option value="Franco Conti">Franco Conti (Leak Check)</option>
+                            <option value="Luis Sanchez">Luis Sanchez (Final Inspection)</option>
+                        </select>
+                    </div>
 
-                <div class="form-group">
-                    <label for="ins-inspector-end">Closing Inspector</label>
-                    <select id="ins-inspector-end" onchange="backupCurrentStateToLocalStorage()">
-                        <option value="">-- Select Closing Inspector --</option>
-                        <option value="Alex Vazquez">Alex Vazquez (Leak Check)</option>
-                        <option value="Andreina Yanez">Andreina Yanez (Final Inspection)</option>
-                        <option value="Darrick Alvarez">Darrick Alvarez (Leak Check)</option>
-                        <option value="Estefany C.">Estefany C. (Final Inspection)</option>
-                        <option value="Franco Conti">Franco Conti (Leak Check)</option>
-                        <option value="Luis Sanchez">Luis Sanchez (Final Inspection)</option>
-                    </select>
-                </div>
+                    <div class="form-group">
+                        <label for="ins-inspector-end">Closing Inspector</label>
+                        <select id="ins-inspector-end" onchange="backupCurrentStateToLocalStorage()">
+                            <option value="">-- Select Closing Inspector --</option>
+                            <option value="Alex Vazquez">Alex Vazquez (Leak Check)</option>
+                            <option value="Andreina Yanez">Andreina Yanez (Final Inspection)</option>
+                            <option value="Darrick Alvarez">Darrick Alvarez (Leak Check)</option>
+                            <option value="Estefany C.">Estefany C. (Final Inspection)</option>
+                            <option value="Franco Conti">Franco Conti (Leak Check)</option>
+                            <option value="Luis Sanchez">Luis Sanchez (Final Inspection)</option>
+                        </select>
+                    </div>
 
-                <div class="form-group">
-                    <label for="ins-production-line">Production Line</label>
-                    <select id="ins-production-line" onchange="backupCurrentStateToLocalStorage()">
-                        <option value="">-- Select Production Line --</option>
-                        <option value="Line 1">Line 1</option>
-                        <option value="Line 2">Line 2</option>
-                        <option value="Line 3">Line 3</option>
-                    </select>
-                </div>
+                    <div class="form-group">
+                        <label for="ins-production-line">Production Line</label>
+                        <select id="ins-production-line" onchange="backupCurrentStateToLocalStorage()">
+                            <option value="">-- Select Production Line --</option>
+                            <option value="Line 1">Line 1</option>
+                            <option value="Line 2">Line 2</option>
+                            <option value="Line 3">Line 3</option>
+                        </select>
+                    </div>
 
-                <div class="form-group">
-                    <label for="ins-template-select">Active Inspection Checklist</label>
-                    <select id="ins-template-select" onchange="loadInspectionForm()">
-                        <option value="">-- No Checklist Deployed --</option>
-                    </select>
-                </div>
+                    <div class="form-group">
+                        <label for="ins-template-select">Active Inspection Checklist</label>
+                        <select id="ins-template-select" onchange="loadInspectionForm()">
+                            <option value="">-- No Checklist Deployed --</option>
+                        </select>
+                    </div>
 
-                <div class="form-group">
-                    <label for="ins-serial">Work Order / Serial Number</label>
-                    <input type="text" id="ins-serial" placeholder="e.g., 260205560001" oninput="backupCurrentStateToLocalStorage()">
+                    <div class="form-group">
+                        <label for="ins-serial">Work Order / Serial Number</label>
+                        <input type="text" id="ins-serial" placeholder="e.g., 260205560001" oninput="backupCurrentStateToLocalStorage()">
+                    </div>
                 </div>
             </div>
 
@@ -188,7 +187,7 @@
             
             <div class="master-completion-zone">
                 <button class="btn btn-success" style="font-size: 18px; padding: 16px 35px; width: 100%; max-width: 500px; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" onclick="saveCurrentInspection()">
-                    📦 FINISH INSPECTION & PACK DATA (ZIP)
+                    💾 EXPORT DATA & CREATE DIRECTORY FOLDER
                 </button>
             </div>
         </div>
@@ -260,22 +259,6 @@
     <div id="toast-container"></div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyARtvNJxumAgUH2fmfciN1s-VlhtrvUS5k",
-            authDomain: "leak-check-4-all.firebaseapp.com",
-            databaseURL: "https://leak-check-4-all-default-rtdb.firebaseio.com",
-            projectId: "leak-check-4-all",
-            storageBucket: "leak-check-4-all.firebasestorage.app",
-            messagingSenderId: "49342777262",
-            appId: "1:49342777262:web:604860142847ea6dc3aa3f"
-        };
-
-        let remoteDB = null;
-        try {
-            firebase.initializeApp(firebaseConfig);
-            remoteDB = firebase.database();
-        } catch (e) { console.error(e); }
-
         let localTemplatesCache = [];
         let currentActivePhotos = {};
         let globalCameraStream = null;
@@ -283,7 +266,7 @@
         let temporaryCapturedDataUrl = null;
 
         window.onload = function() {
-            // Preload 1 sample model so the app has data on launch
+            // Inicializar memoria caché del navegador con un modelo de muestra base
             localTemplatesCache = [
                 {
                     id: "tmpl_doas_sample",
@@ -298,7 +281,7 @@
             ];
             updateFormTemplateDropdown();
             renderAdminDashboard();
-            addCheckpointRowToCreator(); // Init creator with 1 empty row
+            addCheckpointRowToCreator(); 
         };
 
         function showToast(message, type = 'info') {
@@ -309,7 +292,7 @@
             if (type === 'danger') toast.style.backgroundColor = 'var(--danger)';
             toast.innerHTML = `<span>${message}</span>`;
             container.appendChild(toast);
-            setTimeout(() => { toast.remove(); }, 4000);
+            setTimeout(() => { toast.remove(); }, 5000);
         }
 
         function switchView(viewId, clickedButton) {
@@ -373,17 +356,14 @@
                 fields: compiledFields
             };
 
-            // Push into system memory
             localTemplatesCache.push(newTemplate);
             
-            // Sync UI across both views immediately
             updateFormTemplateDropdown();
             renderAdminDashboard();
             
-            // Reset Form fields
             document.getElementById('adm-template-name').value = '';
             document.getElementById('adm-checkpoint-inputs-container').innerHTML = '';
-            addCheckpointRowToCreator(); // Reset with one clean row
+            addCheckpointRowToCreator();
             
             showToast(`Checklist for '${name}' compiled and active!`, "success");
         }
@@ -462,6 +442,7 @@
             });
         }
 
+        /* CAPTURA EN ALTA RESOLUCIÓN FLUX */
         async function openHardwareViewfinder(fieldId, questionText) {
             const serial = document.getElementById('ins-serial').value.trim();
             const inspector = document.getElementById('ins-inspector').value;
@@ -479,9 +460,20 @@
             document.getElementById('hardware-viewfinder-modal').style.display = 'flex';
 
             try {
-                globalCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+                // Forzamos al hardware del móvil a inicializar el stream en alta definición (Full HD / 4K nativo)
+                globalCameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 3840, min: 1920 },
+                        height: { ideal: 2160, min: 1080 }
+                    }, 
+                    audio: false 
+                });
                 document.getElementById('active-lens-video').srcObject = globalCameraStream;
-            } catch (err) { closeHardwareStreaming(); }
+            } catch (err) { 
+                console.error("Camera access failure:", err);
+                closeHardwareStreaming(); 
+            }
         }
 
         function executeShutterSnapshot() {
@@ -489,21 +481,29 @@
             const canvas = document.getElementById('hidden-bg-canvas');
             const ctx = canvas.getContext('2d');
             
-            canvas.width = video.videoWidth || 1280;
-            canvas.height = video.videoHeight || 720;
+            // Forzamos al Canvas a dimensionarse al tamaño REAL nativo del lente del teléfono, no del visor CSS
+            if (video.videoWidth > 0) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+            } else {
+                canvas.width = 1920; 
+                canvas.height = 1080;
+            }
+            
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            temporaryCapturedDataUrl = canvas.toDataURL('image/jpeg', 1.0);
+            // Guardamos en PNG para preservar el 100% de los píxeles y detalles de las costuras/soldaduras
+            temporaryCapturedDataUrl = canvas.toDataURL('image/png');
             
             document.getElementById('cam-btn-take').style.display = 'none';
             document.getElementById('cam-btn-retake').style.display = 'inline-flex';
             document.getElementById('cam-btn-accept').style.display = 'inline-flex';
             
-            showToast("Photo captured inside buffer! Click 'Accept Photo' to lock it.", "info");
+            showToast("High fidelity image trapped in local buffer.", "info");
         }
 
         function acceptCurrentPhoto() {
-            if (!temporaryCapturedDataUrl) return showToast("No photo snapshot taken yet!", "danger");
+            if (!temporaryCapturedDataUrl) return showToast("No snapshot found!", "danger");
             
             const serial = document.getElementById('ins-serial').value.trim();
             const inspector = document.getElementById('ins-inspector').value;
@@ -511,13 +511,14 @@
             const now = new Date();
             const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
             
-            const fname = `${serial}_${cleanInspector}_${timeStr}.jpg`;
+            // Nombramos el archivo con extensión .png debido a la captura sin pérdidas
+            const fname = `${serial}_${cleanInspector}_${timeStr}.png`;
             currentActivePhotos[activeFieldTargetId] = { filename: fname, dataUrl: temporaryCapturedDataUrl };
             
             renderPhotoThumbnailInField(activeFieldTargetId, temporaryCapturedDataUrl, fname);
             backupCurrentStateToLocalStorage();
             
-            showToast("Photo verified and linked to check point.", "success");
+            showToast("Photo synchronized with checkpoint checklist.", "success");
             closeHardwareStreaming();
         }
 
@@ -526,7 +527,7 @@
             document.getElementById(`cam_status_${activeFieldTargetId}`).innerHTML = '<span>No Photo Attached</span>';
             document.getElementById(`preview_container_${activeFieldTargetId}`).style.display = 'none';
             backupCurrentStateToLocalStorage();
-            showToast("Photo requirement bypassed.", "warning");
+            showToast("Photo bypass logged.", "warning");
             closeHardwareStreaming();
         }
 
@@ -588,38 +589,37 @@
             }
         }
 
-        function saveCurrentInspection() {
+        /* CRÍTICO: ESCRITURA DIRECTA EN CARPETA LOCAL (SIN ADNS NI SUBIDAS EXTERNAS) */
+        async function saveCurrentInspection() {
             const inspector = document.getElementById('ins-inspector').value;
             const serial = document.getElementById('ins-serial').value.trim();
             const templateId = document.getElementById('ins-template-select').value;
             const line = document.getElementById('ins-production-line').value;
             
-            if (!serial || !templateId || !inspector || !line) return showToast("Missing inspection header data!", "danger");
+            if (!serial || !templateId || !inspector || !line) {
+                return showToast("Missing inspection header data! Complete Serial, Line and Inspector.", "danger");
+            }
             
-            showToast("Packaging inspection files... please wait", "info");
+            // Verificación preventiva de soporte de API nativa del explorador
+            if (!window.showDirectoryPicker) {
+                return showToast("Tu navegador no soporta la escritura directa de carpetas. Usa Google Chrome o Edge actualizado.", "danger");
+            }
+
+            showToast("Procesando imágenes sin compresión... por favor espera.", "info");
             
             const template = localTemplatesCache.find(t => t.id === templateId);
             let textResults = [];
-            const zip = new JSZip();
             
             template.fields.forEach(f => {
                 const commentVal = document.getElementById(`comment_${f.id}`).value.trim();
                 const photoMeta = currentActivePhotos[f.id];
                 
                 textResults.push({
-                    fieldId: f.id, question: f.question,
-                    comment: commentVal, photoName: photoMeta ? photoMeta.filename : "N/A"
+                    fieldId: f.id, 
+                    question: f.question,
+                    comment: commentVal, 
+                    photoName: photoMeta ? photoMeta.filename : "N/A"
                 });
-
-                if (photoMeta && photoMeta.dataUrl) {
-                    const binaryData = atob(photoMeta.dataUrl.split(',')[1]);
-                    const arrayBuffer = new ArrayBuffer(binaryData.length);
-                    const uintArray = new Uint8Array(arrayBuffer);
-                    for (let i = 0; i < binaryData.length; i++) {
-                        uintArray[i] = binaryData.charCodeAt(i);
-                    }
-                    zip.file(photoMeta.filename, new Blob([arrayBuffer], { type: 'image/jpeg' }));
-                }
             });
 
             const reportMeta = {
@@ -628,30 +628,60 @@
                 inspector: inspector,
                 closingInspector: document.getElementById('ins-inspector-end').value,
                 modelName: template.name,
-                timestamp: Date.now(), results: textResults
+                timestamp: Date.now(), 
+                results: textResults
             };
-            zip.file(`REPORT_DATA_${serial}.json`, JSON.stringify(reportMeta, null, 2));
 
-            if (remoteDB) {
-                remoteDB.ref('reports/' + 'rep_' + Date.now()).set(reportMeta);
-            }
-
+            // Estructuración del nombre de la carpeta según tu requerimiento exacto
             const dateStr = new Date().toISOString().split('T')[0];
             const cleanInspector = inspector.replace(/[^a-zA-Z0-9]/g, '_');
-            const zipFileName = `${serial}_${cleanInspector}_${dateStr}.zip`;
+            const folderName = `${serial}_${cleanInspector}_${dateStr}`;
 
-            zip.generateAsync({ type: "blob", compression: "STORE" }).then(content => {
-                const downloadLink = document.createElement("a");
-                downloadLink.href = URL.createObjectURL(content);
-                downloadLink.download = zipFileName;
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
+            try {
+                showToast("Por favor, selecciona la ubicación en tu dispositivo donde se guardará la carpeta de inspección.", "warning");
                 
+                // Abre el cuadro de diálogo nativo del sistema operativo para elegir el directorio base
+                const directoryHandle = await window.showDirectoryPicker();
+                
+                // Crea físicamente una subcarpeta local con el nombre estructurado
+                const inspectionFolderHandle = await directoryHandle.getDirectoryHandle(folderName, { create: true });
+                
+                // Escritura del Archivo de Texto JSON de Reporte
+                const reportFileHandle = await inspectionFolderHandle.getFileHandle(`REPORT_DATA_${serial}.json`, { create: true });
+                const reportWritable = await reportFileHandle.createWritable();
+                await reportWritable.write(JSON.stringify(reportMeta, null, 2));
+                await reportWritable.close();
+
+                // Iteración y Escritura individualizada de cada foto PNG en Alta Resolución
+                for (const fieldId in currentActivePhotos) {
+                    const photoMeta = currentActivePhotos[fieldId];
+                    if (photoMeta && photoMeta.dataUrl) {
+                        // Reconstrucción del array binario a partir del string base64 local en RAM
+                        const binaryData = atob(photoMeta.dataUrl.split(',')[1]);
+                        const arrayBuffer = new ArrayBuffer(binaryData.length);
+                        const uintArray = new Uint8Array(arrayBuffer);
+                        for (let i = 0; i < binaryData.length; i++) {
+                            uintArray[i] = binaryData.charCodeAt(i);
+                        }
+                        const photoBlob = new Blob([arrayBuffer], { type: 'image/png' });
+                        
+                        // Grabación directa en el almacenamiento físico local
+                        const photoFileHandle = await inspectionFolderHandle.getFileHandle(photoMeta.filename, { create: true });
+                        const photoWritable = await photoFileHandle.createWritable();
+                        await photoWritable.write(photoBlob);
+                        await photoWritable.close();
+                    }
+                }
+
+                // Borramos caché intermedia de recuperación interna tras un guardado exitoso
                 localStorage.removeItem(`workorder_buffer_${serial}`);
-                showToast("Unit data safely packed & stored locally!", "success");
+                showToast(`📦 Carpeta nativa local '${folderName}' generada y salvada de manera exitosa en el dispositivo.`, "success");
                 resetForm();
-            });
+
+            } catch (err) {
+                console.error("File System API Error:", err);
+                showToast("Acción cancelada o error de permisos al escribir la carpeta directamente en el almacenamiento.", "danger");
+            }
         }
 
         function resetForm() {
