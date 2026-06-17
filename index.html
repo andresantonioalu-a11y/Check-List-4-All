@@ -85,10 +85,13 @@
         .viewfinder-controls { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 10px; }
         .photo-action-cluster { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
 
-        .items-list { max-height: 450px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
-        .list-item { padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: white; }
+        /* ADMIN PANEL UI STYLES */
+        .items-list { max-height: 500px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; background: #f1f5f9; padding: 10px; }
+        .list-item { padding: 15px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; background: white; display: flex; flex-direction: column; gap: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .list-item-header { display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: var(--primary); }
+        .list-item-badge { font-size: 11px; padding: 3px 8px; background: var(--accent); color: white; border-radius: 10px; }
+        .list-item-details { font-size: 13px; color: var(--text-muted); }
         
-        /* FLOATING OR ISOLATED PANEL FOR DEFINITIVE END OF UNIT AUDIT */
         .master-completion-zone { margin-top: 25px; padding: 20px; border-top: 2px dashed var(--border); text-align: center; }
     </style>
 </head>
@@ -182,7 +185,8 @@
     <div id="admin-view" class="view-panel">
         <div class="card">
             <div class="card-title">Active Operational Checklists</div>
-            <div class="items-list" id="admin-templates-list"></div>
+            <div class="items-list" id="admin-templates-list">
+                </div>
         </div>
     </div>
 
@@ -199,9 +203,7 @@
             <div class="photo-action-cluster">
                 <button class="btn" style="background-color: var(--accent);" id="cam-btn-take" onclick="executeShutterSnapshot()">Take Photo</button>
                 <button class="btn btn-warning" id="cam-btn-retake" style="display: none;" onclick="executeShutterSnapshot()">Retake Photo</button>
-                
                 <button class="btn btn-success" id="cam-btn-accept" style="display: none;" onclick="acceptCurrentPhoto()">Accept Photo</button>
-                
                 <button class="btn btn-danger" id="cam-btn-skip" onclick="skipPhotoAttachment()">Skip</button>
             </div>
         </div>
@@ -234,6 +236,7 @@
         let temporaryCapturedDataUrl = null;
 
         window.onload = function() {
+            // Checklist definition cache
             localTemplatesCache = [
                 {
                     id: "tmpl_leak_check",
@@ -248,6 +251,7 @@
                 }
             ];
             updateFormTemplateDropdown();
+            renderAdminDashboard(); // Render Admin View data immediately on boot
         };
 
         function showToast(message, type = 'info') {
@@ -266,6 +270,11 @@
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
             if (clickedButton) clickedButton.classList.add('active');
+            
+            // If admin clicks dashboard tab, force-refresh the data rendering
+            if (viewId === 'admin-view') {
+                renderAdminDashboard();
+            }
         }
 
         function updateFormTemplateDropdown() {
@@ -273,6 +282,35 @@
             select.innerHTML = '<option value="">-- Select Checklist --</option>';
             localTemplatesCache.forEach(t => {
                 const opt = document.createElement('option'); opt.value = t.id; opt.innerText = `[${t.dept}] ${t.name}`; select.appendChild(opt);
+            });
+        }
+
+        /* FIXED FUNCTION: Renders the Admin view dynamically */
+        function renderAdminDashboard() {
+            const adminContainer = document.getElementById('admin-templates-list');
+            if (!adminContainer) return;
+            
+            adminContainer.innerHTML = '';
+            
+            if (localTemplatesCache.length === 0) {
+                adminContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted);">No Active Protocols Configured.</div>';
+                return;
+            }
+
+            localTemplatesCache.forEach(template => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
+                    <div class="list-item-header">
+                        <span>${template.name}</span>
+                        <span class="list-item-badge">${template.dept}</span>
+                    </div>
+                    <div class="list-item-details">
+                        <strong>Template ID:</strong> ${template.id} <br>
+                        <strong>Total Sequence Checkpoints:</strong> ${template.fields.length} elements mapped.
+                    </div>
+                `;
+                adminContainer.appendChild(item);
             });
         }
 
@@ -369,8 +407,6 @@
             backupCurrentStateToLocalStorage();
             
             showToast("Photo verified and linked to check point.", "success");
-            
-            // CLOSES LENS AND RETURNS AUTO TO MAIN CHECKLIST WINDOW
             closeHardwareStreaming();
         }
 
@@ -389,6 +425,7 @@
             document.getElementById(`preview_container_${fieldId}`).style.display = 'block';
         }
 
+        UX for mobile inspection tool. Source tracking configured.
         function closeHardwareStreaming() {
             document.getElementById('hardware-viewfinder-modal').style.display = 'none';
             if (globalCameraStream) { globalCameraStream.getTracks().forEach(t => t.stop()); globalCameraStream = null; }
