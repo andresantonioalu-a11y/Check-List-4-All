@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InspectFlow Pro - Quality Inspection System</title>
     
+    <!-- JSZip Library fallback inclusion -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <style>
@@ -53,8 +54,7 @@
         .btn:hover { background-color: var(--accent-hover); }
         .btn-success { background-color: var(--success); }
         .btn-secondary { background-color: #64748b; }
-        .btn-warning { background-color: var(--warning); }
-        .btn-danger { background-color: var(--danger); }
+  
         .btn-block { width: 100%; }
 
         .inspection-field-block { background: white; border: 1px solid var(--border); padding: 15px; border-radius: 6px; margin-bottom: 12px; }
@@ -71,7 +71,7 @@
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
         .toast { background-color: var(--primary); color: white; padding: 12px 20px; border-radius: 6px; margin-top: 10px; font-size: 13px; display: flex; gap: 15px; align-items: center; }
         
-        /* CAMERA SCREEN MODAL */
+        /* HARDWARE SCREEN CAMERA VIEW MODAL */
         #hardware-viewfinder-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #000; z-index: 3000; flex-direction: column; justify-content: space-between; align-items: center; padding: 20px 10px; }
         .viewfinder-header { color: white; text-align: center; width: 100%; padding: 5px 0; }
         .viewfinder-checkpoint-title { font-size: 16px; font-weight: 600; color: #38bdf8; text-transform: uppercase; margin-bottom: 4px; }
@@ -80,9 +80,10 @@
         #active-lens-video { width: 100%; height: 100%; object-fit: cover; }
         
         .viewfinder-controls { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 10px; }
-        .photo-action-cluster { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+        .photo-action-cluster { display: grid; grid-template-columns: 1fr; gap: 12px; width: 100%; }
+        .photo-action-cluster.split-layout { grid-template-columns: 1fr 1fr; }
 
-        /* ADMIN PANEL UI STYLES */
+        /* LIST PANELS */
         .items-list { max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; background: #f1f5f9; padding: 10px; }
         .list-item { padding: 15px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; background: white; display: flex; flex-direction: column; gap: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .list-item-header { display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: var(--primary); }
@@ -90,7 +91,6 @@
         .list-item-details { font-size: 13px; color: var(--text-muted); }
         
         .checkpoint-entry-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; margin-bottom: 8px; align-items: center; }
-        
         .master-completion-zone { margin-top: 25px; padding: 20px; border-top: 2px dashed var(--border); text-align: center; }
     </style>
 </head>
@@ -112,6 +112,7 @@
         <button id="btn-nav-admin" class="nav-btn" onclick="switchView('admin-view', this)">Admin Control Dashboard</button>
     </nav>
 
+    <!-- VIEW 1: INSPECTOR MODULE -->
     <div id="inspector-view" class="view-panel active">
         <div class="grid-2">
             <div class="card">
@@ -170,17 +171,17 @@
 
             <div class="card">
                 <div class="card-title">Crash Recovery Tool</div>
-                
                 <div class="form-group row-layout">
                     <div style="flex: 1;">
                         <label for="recovery-work-order">Call Work Order Number</label>
                         <input type="text" id="recovery-work-order" placeholder="Enter Serial to Resume">
                     </div>
-                    <button class="btn btn-warning" onclick="recoverInspectionSession()">Resume Unit Inspection</button>
+                    <button class="btn" style="background-color: var(--warning);" onclick="recoverInspectionSession()">Resume Unit Inspection</button>
                 </div>
             </div>
         </div>
 
+        <!-- CHECKLIST DATA CONTEXT -->
         <div class="card" id="dynamic-form-card" style="display: none; margin-top: 20px;">
             <div class="card-title" id="dynamic-form-title">Operational Control Form</div>
             <div id="dynamic-fields-container"></div>
@@ -193,8 +194,10 @@
         </div>
     </div>
 
+    <!-- VIEW 2: ADMIN PANEL WITH CHECKLIST CREATOR -->
     <div id="admin-view" class="view-panel">
         <div class="grid-2">
+            <!-- LEFT: CREATOR FORM -->
             <div class="card">
                 <div class="card-title">🛠️ Create New DOAS Model Checklist</div>
                 
@@ -217,7 +220,8 @@
                 </div>
 
                 <div id="adm-checkpoint-inputs-container">
-                    </div>
+                    <!-- Dynamic fields hook here -->
+                </div>
 
                 <button class="btn btn-secondary btn-block" style="margin-top: 10px; background-color: var(--primary-light);" onclick="addCheckpointRowToCreator()">
                     ➕ Add Checkpoint Row
@@ -228,14 +232,17 @@
                 </button>
             </div>
 
+            <!-- RIGHT: ACTIVE PROTOCOLS -->
             <div class="card">
                 <div class="card-title">Deployed Active Checklists</div>
                 <div class="items-list" id="admin-templates-list">
-                    </div>
+                    <!-- List items generate here -->
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- HANGING-FREE SHUTTER VIEW MODAL -->
     <div id="hardware-viewfinder-modal">
         <div class="viewfinder-header">
             <div class="viewfinder-checkpoint-title" id="viewfinder-target-display">CHECKPOINT TARGET</div>
@@ -246,11 +253,16 @@
         </div>
         
         <div class="viewfinder-controls">
-            <div class="photo-action-cluster">
-                <button class="btn" style="background-color: var(--accent);" id="cam-btn-take" onclick="executeShutterSnapshot()">Take Photo</button>
-                <button class="btn btn-warning" id="cam-btn-retake" style="display: none;" onclick="executeShutterSnapshot()">Retake Photo</button>
-                <button class="btn btn-success" id="cam-btn-accept" style="display: none;" onclick="acceptCurrentPhoto()">Accept Photo</button>
-                <button class="btn btn-danger" id="cam-btn-skip" onclick="skipPhotoAttachment()">Skip</button>
+            <!-- SINGLE BTN CAPTURE BASE -->
+            <div id="capture-initial-zone" class="photo-action-cluster">
+                <button class="btn" style="background-color: var(--accent); padding: 15px; font-size: 16px; font-weight: 600;" onclick="executeShutterSnapshot()">📸 Take Photo</button>
+                <button class="btn" style="background-color: var(--primary-light); margin-top: 5px;" onclick="closeHardwareStreaming()">Cancel</button>
+            </div>
+            
+            <!-- SPLIT DECISION ACTIONS (HIDDEN UNTIL CAPTURED) -->
+            <div id="capture-decision-zone" class="photo-action-cluster split-layout" style="display: none;">
+                <button class="btn" style="background-color: var(--warning);" onclick="retryShutterVideoFeed()">🔄 Retake</button>
+                <button class="btn btn-success" style="font-weight: 600;" onclick="acceptCurrentPhoto()">✅ Accept Photo</button>
             </div>
         </div>
     </div>
@@ -266,7 +278,7 @@
         let temporaryCapturedDataUrl = null;
 
         window.onload = function() {
-            // Inicializar memoria caché del navegador con un modelo de muestra base
+            // Pre-seed core sample templates for Leak Check and Final Inspection
             localTemplatesCache = [
                 {
                     id: "tmpl_doas_sample",
@@ -300,13 +312,9 @@
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
             if (clickedButton) clickedButton.classList.add('active');
-            
-            if (viewId === 'admin-view') {
-                renderAdminDashboard();
-            }
+            if (viewId === 'admin-view') renderAdminDashboard();
         }
 
-        /* CREATOR MANAGEMENT FUNCTIONS */
         function addCheckpointRowToCreator() {
             const container = document.getElementById('adm-checkpoint-inputs-container');
             const rowIndex = container.children.length + 1;
@@ -317,7 +325,7 @@
             row.innerHTML = `
                 <input type="text" class="adm-input-q" placeholder="Checkpoint Question #${rowIndex}">
                 <input type="text" class="adm-input-s" placeholder="Specification (e.g. No Leaks)">
-                <button class="btn btn-danger" style="padding: 10px;" onclick="document.getElementById('adm_row_${rowIndex}').remove()">🗑️</button>
+                <button class="btn" style="background-color: var(--danger); padding: 10px;" onclick="document.getElementById('adm_row_${rowIndex}').remove()">🗑️</button>
             `;
             container.appendChild(row);
         }
@@ -345,18 +353,14 @@
                 }
             });
 
-            if (compiledFields.length === 0) {
-                return showToast("Please add at least one checkpoint to this model.", "danger");
-            }
+            if (compiledFields.length === 0) return showToast("Please add at least one checkpoint to this model.", "danger");
 
-            const newTemplate = {
+            localTemplatesCache.push({
                 id: `tmpl_${Date.now()}`,
                 name: name,
                 dept: dept,
                 fields: compiledFields
-            };
-
-            localTemplatesCache.push(newTemplate);
+            });
             
             updateFormTemplateDropdown();
             renderAdminDashboard();
@@ -379,7 +383,6 @@
         function renderAdminDashboard() {
             const adminContainer = document.getElementById('admin-templates-list');
             if (!adminContainer) return;
-            
             adminContainer.innerHTML = '';
             
             if (localTemplatesCache.length === 0) {
@@ -404,7 +407,6 @@
             });
         }
 
-        /* INSPECTION EXECUTION FUNCTIONS */
         function loadInspectionForm(recoveredState = null) {
             const templateId = recoveredState ? recoveredState.templateId : document.getElementById('ins-template-select').value;
             if (!recoveredState) document.getElementById('ins-template-select').value = templateId;
@@ -425,7 +427,7 @@
                 
                 block.innerHTML = `
                     <div class="field-question">${field.question} <span class="field-spec">(${field.spec})</span></div>
-                    <div class="form-group"><input type="text" id="comment_${field.id}" value="${savedComment}" placeholder="Observations" oninput="backupCurrentStateToLocalStorage()"></div>
+                    <div class="form-group"><input type="text" id="comment_${field.id}" value="${savedComment}" placeholder="Enter observations/measurements" oninput="backupCurrentStateToLocalStorage()"></div>
                     <div class="simplified-camera-zone">
                         <div class="camera-controls-row">
                             <div class="camera-status-indicator" id="cam_status_${field.id}"><span>No Photo Attached</span></div>
@@ -442,7 +444,6 @@
             });
         }
 
-        /* CAPTURA EN ALTA RESOLUCIÓN FLUX */
         async function openHardwareViewfinder(fieldId, questionText) {
             const serial = document.getElementById('ins-serial').value.trim();
             const inspector = document.getElementById('ins-inspector').value;
@@ -453,57 +454,78 @@
             
             document.getElementById('viewfinder-target-display').innerText = questionText;
             
-            document.getElementById('cam-btn-take').style.display = 'inline-flex';
-            document.getElementById('cam-btn-retake').style.display = 'none';
-            document.getElementById('cam-btn-accept').style.display = 'none';
-
+            // Reset state layout elements
+            document.getElementById('capture-initial-zone').style.display = 'flex';
+            document.getElementById('capture-decision-zone').style.display = 'none';
             document.getElementById('hardware-viewfinder-modal').style.display = 'flex';
 
             try {
-                // Forzamos al hardware del móvil a inicializar el stream en alta definición (Full HD / 4K nativo)
                 globalCameraStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: "environment",
-                        width: { ideal: 3840, min: 1920 },
-                        height: { ideal: 2160, min: 1080 }
-                    }, 
+                    video: { facingMode: "environment", width: { ideal: 3840, min: 1920 }, height: { ideal: 2160, min: 1080 } }, 
                     audio: false 
                 });
-                document.getElementById('active-lens-video').srcObject = globalCameraStream;
+                const video = document.getElementById('active-lens-video');
+                video.srcObject = globalCameraStream;
+                video.play();
             } catch (err) { 
-                console.error("Camera access failure:", err);
+                console.error("Camera linkage failure:", err);
+                showToast("Hardware lens call error. Verify browser permissions.", "danger");
                 closeHardwareStreaming(); 
             }
         }
 
+        /* FIXED SHUTTER SNAPSHOT: GUARANTEES IMMEDIATE PANEL RESPONSE AND SEPARATES MODES */
         function executeShutterSnapshot() {
             const video = document.getElementById('active-lens-video');
             const canvas = document.getElementById('hidden-bg-canvas');
+            
+            if (!video || !canvas) return showToast("Hardware mapping interface exception.", "danger");
+
+            // STEP 1: IMMEDIATELY flip button views so the interface registers the command instantly
+            document.getElementById('capture-initial-zone').style.display = 'none';
+            document.getElementById('capture-decision-zone').style.display = 'flex';
+
             const ctx = canvas.getContext('2d');
             
-            // Forzamos al Canvas a dimensionarse al tamaño REAL nativo del lente del teléfono, no del visor CSS
-            if (video.videoWidth > 0) {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-            } else {
-                canvas.width = 1920; 
-                canvas.height = 1080;
+            let targetWidth = video.videoWidth;
+            let targetHeight = video.videoHeight;
+            
+            // Fallback frame definitions if mobile reporting latency occurs
+            if (!targetWidth || targetWidth === 0 || !targetHeight || targetHeight === 0) {
+                targetWidth = 1920;
+                targetHeight = 1080;
             }
             
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
             
-            // Guardamos en PNG para preservar el 100% de los píxeles y detalles de las costuras/soldaduras
-            temporaryCapturedDataUrl = canvas.toDataURL('image/png');
+            try {
+                // STEP 2: Extract frame array data instantly
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                temporaryCapturedDataUrl = canvas.toDataURL('image/png');
+                
+                // STEP 3: Halt video play lines so the inspector sees a crisp frozen frame confirmation
+                video.pause();
+                showToast("High fidelity image trapped in local buffer.", "info");
+            } catch (err) {
+                console.error("Frame freeze tracking array error:", err);
+                retryShutterVideoFeed();
+                showToast("Frame processing capture failure. Retrying stream.", "danger");
+            }
+        }
+
+        function retryShutterVideoFeed() {
+            // Reset controls layout back to operational default
+            document.getElementById('capture-initial-zone').style.display = 'flex';
+            document.getElementById('capture-decision-zone').style.display = 'none';
             
-            document.getElementById('cam-btn-take').style.display = 'none';
-            document.getElementById('cam-btn-retake').style.display = 'inline-flex';
-            document.getElementById('cam-btn-accept').style.display = 'inline-flex';
-            
-            showToast("High fidelity image trapped in local buffer.", "info");
+            temporaryCapturedDataUrl = null;
+            const video = document.getElementById('active-lens-video');
+            if (video) video.play();
         }
 
         function acceptCurrentPhoto() {
-            if (!temporaryCapturedDataUrl) return showToast("No snapshot found!", "danger");
+            if (!temporaryCapturedDataUrl) return showToast("No snapshot payload found!", "danger");
             
             const serial = document.getElementById('ins-serial').value.trim();
             const inspector = document.getElementById('ins-inspector').value;
@@ -511,23 +533,13 @@
             const now = new Date();
             const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
             
-            // Nombramos el archivo con extensión .png debido a la captura sin pérdidas
             const fname = `${serial}_${cleanInspector}_${timeStr}.png`;
             currentActivePhotos[activeFieldTargetId] = { filename: fname, dataUrl: temporaryCapturedDataUrl };
             
             renderPhotoThumbnailInField(activeFieldTargetId, temporaryCapturedDataUrl, fname);
             backupCurrentStateToLocalStorage();
             
-            showToast("Photo synchronized with checkpoint checklist.", "success");
-            closeHardwareStreaming();
-        }
-
-        function skipPhotoAttachment() {
-            delete currentActivePhotos[activeFieldTargetId];
-            document.getElementById(`cam_status_${activeFieldTargetId}`).innerHTML = '<span>No Photo Attached</span>';
-            document.getElementById(`preview_container_${activeFieldTargetId}`).style.display = 'none';
-            backupCurrentStateToLocalStorage();
-            showToast("Photo bypass logged.", "warning");
+            showToast("Photo synchronized with checklist context.", "success");
             closeHardwareStreaming();
         }
 
@@ -539,7 +551,14 @@
 
         function closeHardwareStreaming() {
             document.getElementById('hardware-viewfinder-modal').style.display = 'none';
-            if (globalCameraStream) { globalCameraStream.getTracks().forEach(t => t.stop()); globalCameraStream = null; }
+            if (globalCameraStream) {
+                try {
+                    globalCameraStream.getTracks().forEach(t => t.stop());
+                } catch(e) { console.error(e); }
+                globalCameraStream = null;
+            }
+            const video = document.getElementById('active-lens-video');
+            if (video) video.srcObject = null;
         }
 
         function backupCurrentStateToLocalStorage() {
@@ -554,7 +573,7 @@
                 if (inputEl) commentsData[f.id] = inputEl.value.trim();
             });
 
-            const backupPayload = {
+            localStorage.setItem(`workorder_buffer_${serial}`, JSON.stringify({
                 serial: serial,
                 templateId: templateId,
                 inspectorStart: document.getElementById('ins-inspector').value,
@@ -563,9 +582,7 @@
                 comments: commentsData,
                 photos: currentActivePhotos,
                 timestamp: Date.now()
-            };
-
-            localStorage.setItem(`workorder_buffer_${serial}`, JSON.stringify(backupPayload));
+            }));
         }
 
         function recoverInspectionSession() {
@@ -589,7 +606,7 @@
             }
         }
 
-        /* CRÍTICO: ESCRITURA DIRECTA EN CARPETA LOCAL (SIN ADNS NI SUBIDAS EXTERNAS) */
+        /* LOCAL DIRECTORY API EXPORT ROUTINE */
         async function saveCurrentInspection() {
             const inspector = document.getElementById('ins-inspector').value;
             const serial = document.getElementById('ins-serial').value.trim();
@@ -597,15 +614,14 @@
             const line = document.getElementById('ins-production-line').value;
             
             if (!serial || !templateId || !inspector || !line) {
-                return showToast("Missing inspection header data! Complete Serial, Line and Inspector.", "danger");
+                return showToast("Missing inspection metadata! Set Serial, Line and Inspector.", "danger");
             }
             
-            // Verificación preventiva de soporte de API nativa del explorador
             if (!window.showDirectoryPicker) {
-                return showToast("Tu navegador no soporta la escritura directa de carpetas. Usa Google Chrome o Edge actualizado.", "danger");
+                return showToast("Your mobile browser does not support physical File Directory instantiation. Use an updated Chrome or Edge app.", "danger");
             }
 
-            showToast("Procesando imágenes sin compresión... por favor espera.", "info");
+            showToast("Processing high-fidelity frames locally... Please wait.", "info");
             
             const template = localTemplatesCache.find(t => t.id === templateId);
             let textResults = [];
@@ -613,7 +629,6 @@
             template.fields.forEach(f => {
                 const commentVal = document.getElementById(`comment_${f.id}`).value.trim();
                 const photoMeta = currentActivePhotos[f.id];
-                
                 textResults.push({
                     fieldId: f.id, 
                     question: f.question,
@@ -632,31 +647,27 @@
                 results: textResults
             };
 
-            // Estructuración del nombre de la carpeta según tu requerimiento exacto
             const dateStr = new Date().toISOString().split('T')[0];
             const cleanInspector = inspector.replace(/[^a-zA-Z0-9]/g, '_');
             const folderName = `${serial}_${cleanInspector}_${dateStr}`;
 
             try {
-                showToast("Por favor, selecciona la ubicación en tu dispositivo donde se guardará la carpeta de inspección.", "warning");
-                
-                // Abre el cuadro de diálogo nativo del sistema operativo para elegir el directorio base
+                showToast("Select target root folder location inside your device system.", "warning");
                 const directoryHandle = await window.showDirectoryPicker();
                 
-                // Crea físicamente una subcarpeta local con el nombre estructurado
+                // Create native subfolder dynamically
                 const inspectionFolderHandle = await directoryHandle.getDirectoryHandle(folderName, { create: true });
                 
-                // Escritura del Archivo de Texto JSON de Reporte
+                // Save JSON compilation profile
                 const reportFileHandle = await inspectionFolderHandle.getFileHandle(`REPORT_DATA_${serial}.json`, { create: true });
                 const reportWritable = await reportFileHandle.createWritable();
                 await reportWritable.write(JSON.stringify(reportMeta, null, 2));
                 await reportWritable.close();
 
-                // Iteración y Escritura individualizada de cada foto PNG en Alta Resolución
+                // Save uncompressed imagery individual streams
                 for (const fieldId in currentActivePhotos) {
                     const photoMeta = currentActivePhotos[fieldId];
                     if (photoMeta && photoMeta.dataUrl) {
-                        // Reconstrucción del array binario a partir del string base64 local en RAM
                         const binaryData = atob(photoMeta.dataUrl.split(',')[1]);
                         const arrayBuffer = new ArrayBuffer(binaryData.length);
                         const uintArray = new Uint8Array(arrayBuffer);
@@ -665,7 +676,6 @@
                         }
                         const photoBlob = new Blob([arrayBuffer], { type: 'image/png' });
                         
-                        // Grabación directa en el almacenamiento físico local
                         const photoFileHandle = await inspectionFolderHandle.getFileHandle(photoMeta.filename, { create: true });
                         const photoWritable = await photoFileHandle.createWritable();
                         await photoWritable.write(photoBlob);
@@ -673,14 +683,12 @@
                     }
                 }
 
-                // Borramos caché intermedia de recuperación interna tras un guardado exitoso
                 localStorage.removeItem(`workorder_buffer_${serial}`);
-                showToast(`📦 Carpeta nativa local '${folderName}' generada y salvada de manera exitosa en el dispositivo.`, "success");
+                showToast(`📦 Local folder '${folderName}' generated and verified on local device storage successfully!`, "success");
                 resetForm();
-
             } catch (err) {
-                console.error("File System API Error:", err);
-                showToast("Acción cancelada o error de permisos al escribir la carpeta directamente en el almacenamiento.", "danger");
+                console.error("Local storage API failure:", err);
+                showToast("Action rejected or disk permission block encountered.", "danger");
             }
         }
 
