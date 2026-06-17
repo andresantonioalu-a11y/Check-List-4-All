@@ -44,13 +44,13 @@
         .view-panel.active { display: block !important; }
         .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin-bottom: 20px; }
         
-        .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .card-title { font-size: 16px; font-weight: 600; color: var(--primary); margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
         
         .form-group { margin-bottom: 15px; }
         .form-group.row-layout { display: flex; gap: 10px; align-items: flex-end; }
         label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background: #fff; }
 
         .btn { background-color: var(--accent); color: white; border: none; padding: 10px 18px; font-size: 14px; font-weight: 500; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
         .btn:hover { background-color: var(--accent-hover); }
@@ -86,11 +86,13 @@
         .photo-action-cluster { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
 
         /* ADMIN PANEL UI STYLES */
-        .items-list { max-height: 500px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; background: #f1f5f9; padding: 10px; }
+        .items-list { max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; background: #f1f5f9; padding: 10px; }
         .list-item { padding: 15px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; background: white; display: flex; flex-direction: column; gap: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .list-item-header { display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: var(--primary); }
         .list-item-badge { font-size: 11px; padding: 3px 8px; background: var(--accent); color: white; border-radius: 10px; }
         .list-item-details { font-size: 13px; color: var(--text-muted); }
+        
+        .checkpoint-entry-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; margin-bottom: 8px; align-items: center; }
         
         .master-completion-zone { margin-top: 25px; padding: 20px; border-top: 2px dashed var(--border); text-align: center; }
     </style>
@@ -145,6 +147,16 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="ins-production-line">Production Line</label>
+                    <select id="ins-production-line" onchange="backupCurrentStateToLocalStorage()">
+                        <option value="">-- Select Production Line --</option>
+                        <option value="Line 1">Line 1</option>
+                        <option value="Line 2">Line 2</option>
+                        <option value="Line 3">Line 3</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
                     <label for="ins-template-select">Active Inspection Checklist</label>
                     <select id="ins-template-select" onchange="loadInspectionForm()">
                         <option value="">-- No Checklist Deployed --</option>
@@ -183,10 +195,45 @@
     </div>
 
     <div id="admin-view" class="view-panel">
-        <div class="card">
-            <div class="card-title">Active Operational Checklists</div>
-            <div class="items-list" id="admin-templates-list">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title">🛠️ Create New DOAS Model Checklist</div>
+                
+                <div class="form-group">
+                    <label for="adm-template-name">DOAS Model / Template Name</label>
+                    <input type="text" id="adm-template-name" placeholder="e.g., DOAS Model 1200 - High Capacity">
                 </div>
+                
+                <div class="form-group">
+                    <label for="adm-template-dept">Target Department</label>
+                    <select id="adm-template-dept">
+                        <option value="Leak Check">Leak Check</option>
+                        <option value="Final Inspection">Final Inspection</option>
+                    </select>
+                </div>
+
+                <div style="margin-top: 20px; margin-bottom: 10px;">
+                    <strong>Define Checklist Checkpoints</strong>
+                    <span style="display:block; font-size:11px; color:var(--text-muted); margin-bottom:10px;">Add the sequence of questions and specifications required for this model.</span>
+                </div>
+
+                <div id="adm-checkpoint-inputs-container">
+                    </div>
+
+                <button class="btn btn-secondary btn-block" style="margin-top: 10px; background-color: var(--primary-light);" onclick="addCheckpointRowToCreator()">
+                    ➕ Add Checkpoint Row
+                </button>
+
+                <button class="btn btn-success btn-block" style="margin-top: 20px; padding: 12px; font-weight: 600;" onclick="saveCompiledTemplate()">
+                    🚀 Save New Checklist Template
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Deployed Active Checklists</div>
+                <div class="items-list" id="admin-templates-list">
+                    </div>
+            </div>
         </div>
     </div>
 
@@ -236,21 +283,22 @@
         let temporaryCapturedDataUrl = null;
 
         window.onload = function() {
+            // Preload 1 sample model so the app has data on launch
             localTemplatesCache = [
                 {
-                    id: "tmpl_leak_check",
-                    name: "Leak Check Inspection Protocol",
+                    id: "tmpl_doas_sample",
+                    name: "DOAS Standard Unit Protocol",
                     dept: "Leak Check",
-                    fields: Array.from({length: 100}, (_, i) => ({
-                        id: `f_lc_${i+1}`,
-                        question: `Check Point #${i+1} - Structural Joint & Seal Audit`,
-                        section: "Leak Check",
-                        spec: "No Bubbles / 0.0 oz/yr"
-                    }))
+                    fields: [
+                        { id: "f_s1", question: "Suction Line Core Brazing Joints", spec: "No Bubbles / 0.0 oz/yr" },
+                        { id: "f_s2", question: "Liquid Line Solenoid Valve Connections", spec: "No Bubbles / 0.0 oz/yr" },
+                        { id: "f_s3", question: "TXV Sensing Bulb Element Fitment", spec: "Visual Check / Sealed" }
+                    ]
                 }
             ];
             updateFormTemplateDropdown();
             renderAdminDashboard();
+            addCheckpointRowToCreator(); // Init creator with 1 empty row
         };
 
         function showToast(message, type = 'info') {
@@ -273,6 +321,71 @@
             if (viewId === 'admin-view') {
                 renderAdminDashboard();
             }
+        }
+
+        /* CREATOR MANAGEMENT FUNCTIONS */
+        function addCheckpointRowToCreator() {
+            const container = document.getElementById('adm-checkpoint-inputs-container');
+            const rowIndex = container.children.length + 1;
+            
+            const row = document.createElement('div');
+            row.className = 'checkpoint-entry-row';
+            row.id = `adm_row_${rowIndex}`;
+            row.innerHTML = `
+                <input type="text" class="adm-input-q" placeholder="Checkpoint Question #${rowIndex}">
+                <input type="text" class="adm-input-s" placeholder="Specification (e.g. No Leaks)">
+                <button class="btn btn-danger" style="padding: 10px;" onclick="document.getElementById('adm_row_${rowIndex}').remove()">🗑️</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function saveCompiledTemplate() {
+            const name = document.getElementById('adm-template-name').value.trim();
+            const dept = document.getElementById('adm-template-dept').value;
+            
+            if (!name) return showToast("Please input a DOAS Model Name", "danger");
+
+            const qInputs = document.querySelectorAll('.adm-input-q');
+            const sInputs = document.querySelectorAll('.adm-input-s');
+            
+            let compiledFields = [];
+            qInputs.forEach((input, index) => {
+                const questionText = input.value.trim();
+                const specText = sInputs[index] ? sInputs[index].value.trim() : "Standard Check";
+                
+                if (questionText) {
+                    compiledFields.push({
+                        id: `f_custom_${Date.now()}_${index}`,
+                        question: questionText,
+                        spec: specText
+                    });
+                }
+            });
+
+            if (compiledFields.length === 0) {
+                return showToast("Please add at least one checkpoint to this model.", "danger");
+            }
+
+            const newTemplate = {
+                id: `tmpl_${Date.now()}`,
+                name: name,
+                dept: dept,
+                fields: compiledFields
+            };
+
+            // Push into system memory
+            localTemplatesCache.push(newTemplate);
+            
+            // Sync UI across both views immediately
+            updateFormTemplateDropdown();
+            renderAdminDashboard();
+            
+            // Reset Form fields
+            document.getElementById('adm-template-name').value = '';
+            document.getElementById('adm-checkpoint-inputs-container').innerHTML = '';
+            addCheckpointRowToCreator(); // Reset with one clean row
+            
+            showToast(`Checklist for '${name}' compiled and active!`, "success");
         }
 
         function updateFormTemplateDropdown() {
@@ -311,6 +424,7 @@
             });
         }
 
+        /* INSPECTION EXECUTION FUNCTIONS */
         function loadInspectionForm(recoveredState = null) {
             const templateId = recoveredState ? recoveredState.templateId : document.getElementById('ins-template-select').value;
             if (!recoveredState) document.getElementById('ins-template-select').value = templateId;
@@ -444,6 +558,7 @@
                 templateId: templateId,
                 inspectorStart: document.getElementById('ins-inspector').value,
                 inspectorEnd: document.getElementById('ins-inspector-end').value,
+                productionLine: document.getElementById('ins-production-line').value,
                 comments: commentsData,
                 photos: currentActivePhotos,
                 timestamp: Date.now()
@@ -464,6 +579,7 @@
                 document.getElementById('ins-serial').value = session.serial;
                 document.getElementById('ins-inspector').value = session.inspectorStart || '';
                 document.getElementById('ins-inspector-end').value = session.inspectorEnd || '';
+                document.getElementById('ins-production-line').value = session.productionLine || '';
                 
                 loadInspectionForm(session);
                 showToast("Inspection records retrieved successfully!", "success");
@@ -476,10 +592,11 @@
             const inspector = document.getElementById('ins-inspector').value;
             const serial = document.getElementById('ins-serial').value.trim();
             const templateId = document.getElementById('ins-template-select').value;
+            const line = document.getElementById('ins-production-line').value;
             
-            if (!serial || !templateId || !inspector) return showToast("Missing inspection header data!", "danger");
+            if (!serial || !templateId || !inspector || !line) return showToast("Missing inspection header data!", "danger");
             
-            showToast("Packaging massive high-fidelity images... please wait", "info");
+            showToast("Packaging inspection files... please wait", "info");
             
             const template = localTemplatesCache.find(t => t.id === templateId);
             let textResults = [];
@@ -490,7 +607,7 @@
                 const photoMeta = currentActivePhotos[f.id];
                 
                 textResults.push({
-                    fieldId: f.id, question: f.question, section: f.section,
+                    fieldId: f.id, question: f.question,
                     comment: commentVal, photoName: photoMeta ? photoMeta.filename : "N/A"
                 });
 
@@ -506,8 +623,11 @@
             });
 
             const reportMeta = {
-                serial: serial, inspector: inspector,
+                serial: serial,
+                productionLine: line,
+                inspector: inspector,
                 closingInspector: document.getElementById('ins-inspector-end').value,
+                modelName: template.name,
                 timestamp: Date.now(), results: textResults
             };
             zip.file(`REPORT_DATA_${serial}.json`, JSON.stringify(reportMeta, null, 2));
@@ -537,6 +657,7 @@
         function resetForm() {
             document.getElementById('ins-serial').value = '';
             document.getElementById('recovery-work-order').value = '';
+            document.getElementById('ins-production-line').value = '';
             document.getElementById('dynamic-form-card').style.display = 'none';
             currentActivePhotos = {};
         }
