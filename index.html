@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InspectFlow Pro - Quality Inspection System</title>
     
-    <!-- JSZip Library fallback inclusion -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <style>
@@ -54,7 +53,8 @@
         .btn:hover { background-color: var(--accent-hover); }
         .btn-success { background-color: var(--success); }
         .btn-secondary { background-color: #64748b; }
-  
+        .btn-warning { background-color: var(--warning); }
+        .btn-danger { background-color: var(--danger); }
         .btn-block { width: 100%; }
 
         .inspection-field-block { background: white; border: 1px solid var(--border); padding: 15px; border-radius: 6px; margin-bottom: 12px; }
@@ -71,15 +71,15 @@
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
         .toast { background-color: var(--primary); color: white; padding: 12px 20px; border-radius: 6px; margin-top: 10px; font-size: 13px; display: flex; gap: 15px; align-items: center; }
         
-        /* HARDWARE SCREEN CAMERA VIEW MODAL */
-        #hardware-viewfinder-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #000; z-index: 3000; flex-direction: column; justify-content: space-between; align-items: center; padding: 20px 10px; }
+        /* FULL SCREEN OVERLAY VIEWFINDER */
+        #hardware-viewfinder-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #000; z-index: 9999; flex-direction: column; justify-content: space-between; align-items: center; padding: 20px 10px; }
         .viewfinder-header { color: white; text-align: center; width: 100%; padding: 5px 0; }
         .viewfinder-checkpoint-title { font-size: 16px; font-weight: 600; color: #38bdf8; text-transform: uppercase; margin-bottom: 4px; }
         
-        .viewfinder-container { width: 100%; max-width: 480px; height: 60vh; border-radius: 12px; overflow: hidden; border: 2px solid #334155; position: relative; background-color: #111; }
+        .viewfinder-container { width: 100%; max-width: 480px; height: 65vh; border-radius: 12px; overflow: hidden; border: 2px solid #334155; position: relative; background-color: #111; }
         #active-lens-video { width: 100%; height: 100%; object-fit: cover; }
         
-        .viewfinder-controls { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 10px; }
+        .viewfinder-controls { width: 100%; max-width: 480px; padding: 10px; display: flex; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.5); border-radius: 8px; }
         .photo-action-cluster { display: grid; grid-template-columns: 1fr; gap: 12px; width: 100%; }
         .photo-action-cluster.split-layout { grid-template-columns: 1fr 1fr; }
 
@@ -112,7 +112,6 @@
         <button id="btn-nav-admin" class="nav-btn" onclick="switchView('admin-view', this)">Admin Control Dashboard</button>
     </nav>
 
-    <!-- VIEW 1: INSPECTOR MODULE -->
     <div id="inspector-view" class="view-panel active">
         <div class="grid-2">
             <div class="card">
@@ -146,12 +145,17 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="ins-production-line">Production Line</label>
+                        <label for="ins-production-line">Production Line / Area</label>
                         <select id="ins-production-line" onchange="backupCurrentStateToLocalStorage()">
-                            <option value="">-- Select Production Line --</option>
+                            <option value="">-- Select Line / Area --</option>
                             <option value="Line 1">Line 1</option>
                             <option value="Line 2">Line 2</option>
                             <option value="Line 3">Line 3</option>
+                            <option value="Line 4">Line 4</option>
+                            <option value="Line 5">Line 5</option>
+                            <option value="Line 6">Line 6</option>
+                            <option value="Line 7">Line 7</option>
+                            <option value="Prototype">Prototype</option>
                         </select>
                     </div>
 
@@ -176,12 +180,11 @@
                         <label for="recovery-work-order">Call Work Order Number</label>
                         <input type="text" id="recovery-work-order" placeholder="Enter Serial to Resume">
                     </div>
-                    <button class="btn" style="background-color: var(--warning);" onclick="recoverInspectionSession()">Resume Unit Inspection</button>
+                    <button class="btn btn-warning" onclick="recoverInspectionSession()">Resume Unit Inspection</button>
                 </div>
             </div>
         </div>
 
-        <!-- CHECKLIST DATA CONTEXT -->
         <div class="card" id="dynamic-form-card" style="display: none; margin-top: 20px;">
             <div class="card-title" id="dynamic-form-title">Operational Control Form</div>
             <div id="dynamic-fields-container"></div>
@@ -194,10 +197,8 @@
         </div>
     </div>
 
-    <!-- VIEW 2: ADMIN PANEL WITH CHECKLIST CREATOR -->
     <div id="admin-view" class="view-panel">
         <div class="grid-2">
-            <!-- LEFT: CREATOR FORM -->
             <div class="card">
                 <div class="card-title">🛠️ Create New DOAS Model Checklist</div>
                 
@@ -220,8 +221,7 @@
                 </div>
 
                 <div id="adm-checkpoint-inputs-container">
-                    <!-- Dynamic fields hook here -->
-                </div>
+                    </div>
 
                 <button class="btn btn-secondary btn-block" style="margin-top: 10px; background-color: var(--primary-light);" onclick="addCheckpointRowToCreator()">
                     ➕ Add Checkpoint Row
@@ -232,17 +232,14 @@
                 </button>
             </div>
 
-            <!-- RIGHT: ACTIVE PROTOCOLS -->
             <div class="card">
                 <div class="card-title">Deployed Active Checklists</div>
                 <div class="items-list" id="admin-templates-list">
-                    <!-- List items generate here -->
-                </div>
+                    </div>
             </div>
         </div>
     </div>
 
-    <!-- HANGING-FREE SHUTTER VIEW MODAL -->
     <div id="hardware-viewfinder-modal">
         <div class="viewfinder-header">
             <div class="viewfinder-checkpoint-title" id="viewfinder-target-display">CHECKPOINT TARGET</div>
@@ -253,16 +250,14 @@
         </div>
         
         <div class="viewfinder-controls">
-            <!-- SINGLE BTN CAPTURE BASE -->
             <div id="capture-initial-zone" class="photo-action-cluster">
-                <button class="btn" style="background-color: var(--accent); padding: 15px; font-size: 16px; font-weight: 600;" onclick="executeShutterSnapshot()">📸 Take Photo</button>
-                <button class="btn" style="background-color: var(--primary-light); margin-top: 5px;" onclick="closeHardwareStreaming()">Cancel</button>
+                <button class="btn" style="background-color: var(--accent); padding: 14px; font-size: 15px; font-weight: 600;" onclick="executeShutterSnapshot()">📸 Take Photo</button>
+                <button class="btn btn-secondary" onclick="closeHardwareStreaming()">Cancel / Back</button>
             </div>
             
-            <!-- SPLIT DECISION ACTIONS (HIDDEN UNTIL CAPTURED) -->
             <div id="capture-decision-zone" class="photo-action-cluster split-layout" style="display: none;">
-                <button class="btn" style="background-color: var(--warning);" onclick="retryShutterVideoFeed()">🔄 Retake</button>
-                <button class="btn btn-success" style="font-weight: 600;" onclick="acceptCurrentPhoto()">✅ Accept Photo</button>
+                <button class="btn" style="background-color: var(--warning); padding: 12px;" onclick="retryShutterVideoFeed()">🔄 Retake</button>
+                <button class="btn btn-success" style="font-weight: 600; padding: 12px;" onclick="acceptCurrentPhoto()">✅ Accept Photo</button>
             </div>
         </div>
     </div>
@@ -278,7 +273,7 @@
         let temporaryCapturedDataUrl = null;
 
         window.onload = function() {
-            // Pre-seed core sample templates for Leak Check and Final Inspection
+            // Seed base sample template for workspace functionality
             localTemplatesCache = [
                 {
                     id: "tmpl_doas_sample",
@@ -325,7 +320,7 @@
             row.innerHTML = `
                 <input type="text" class="adm-input-q" placeholder="Checkpoint Question #${rowIndex}">
                 <input type="text" class="adm-input-s" placeholder="Specification (e.g. No Leaks)">
-                <button class="btn" style="background-color: var(--danger); padding: 10px;" onclick="document.getElementById('adm_row_${rowIndex}').remove()">🗑️</button>
+                <button class="btn btn-danger" style="padding: 10px;" onclick="document.getElementById('adm_row_${rowIndex}').remove()">🗑️</button>
             `;
             container.appendChild(row);
         }
@@ -355,20 +350,13 @@
 
             if (compiledFields.length === 0) return showToast("Please add at least one checkpoint to this model.", "danger");
 
-            localTemplatesCache.push({
-                id: `tmpl_${Date.now()}`,
-                name: name,
-                dept: dept,
-                fields: compiledFields
-            });
-            
+            localTemplatesCache.push({ id: `tmpl_${Date.now()}`, name: name, dept: dept, fields: compiledFields });
             updateFormTemplateDropdown();
             renderAdminDashboard();
             
             document.getElementById('adm-template-name').value = '';
             document.getElementById('adm-checkpoint-inputs-container').innerHTML = '';
             addCheckpointRowToCreator();
-            
             showToast(`Checklist for '${name}' compiled and active!`, "success");
         }
 
@@ -400,7 +388,7 @@
                     </div>
                     <div class="list-item-details">
                         <strong>Template ID:</strong> ${template.id} <br>
-                        <strong>Total Sequence Checkpoints:</strong> ${template.fields.length} elements mapped.
+                        <strong>Total Checkpoints:</strong> ${template.fields.length} items mapped.
                     </div>
                 `;
                 adminContainer.appendChild(item);
@@ -454,10 +442,10 @@
             
             document.getElementById('viewfinder-target-display').innerText = questionText;
             
-            // Reset state layout elements
-            document.getElementById('capture-initial-zone').style.display = 'flex';
-            document.getElementById('capture-decision-zone').style.display = 'none';
-            document.getElementById('hardware-viewfinder-modal').style.display = 'flex';
+            // Set execution panel views
+            document.getElementById('capture-initial-zone').style.style.display = 'flex';
+            document.getElementById('capture-decision-zone').style.style.display = 'none';
+            document.getElementById('hardware-viewfinder-modal').style.style.display = 'flex';
 
             try {
                 globalCameraStream = await navigator.mediaDevices.getUserMedia({ 
@@ -466,32 +454,30 @@
                 });
                 const video = document.getElementById('active-lens-video');
                 video.srcObject = globalCameraStream;
+                video.setAttribute("playsinline", true);
                 video.play();
             } catch (err) { 
-                console.error("Camera linkage failure:", err);
+                console.error("Camera linkage hardware failure:", err);
                 showToast("Hardware lens call error. Verify browser permissions.", "danger");
                 closeHardwareStreaming(); 
             }
         }
 
-        /* FIXED SHUTTER SNAPSHOT: GUARANTEES IMMEDIATE PANEL RESPONSE AND SEPARATES MODES */
         function executeShutterSnapshot() {
             const video = document.getElementById('active-lens-video');
             const canvas = document.getElementById('hidden-bg-canvas');
             
             if (!video || !canvas) return showToast("Hardware mapping interface exception.", "danger");
 
-            // STEP 1: IMMEDIATELY flip button views so the interface registers the command instantly
-            document.getElementById('capture-initial-zone').style.display = 'none';
-            document.getElementById('capture-decision-zone').style.display = 'flex';
+            // UI Shift occurs first to remove multi-click collisions
+            document.getElementById('capture-initial-zone').style.style.display = 'none';
+            document.getElementById('capture-decision-zone').style.style.display = 'flex';
 
             const ctx = canvas.getContext('2d');
-            
             let targetWidth = video.videoWidth;
             let targetHeight = video.videoHeight;
             
-            // Fallback frame definitions if mobile reporting latency occurs
-            if (!targetWidth || targetWidth === 0 || !targetHeight || targetHeight === 0) {
+            if (!targetWidth || !targetHeight) {
                 targetWidth = 1920;
                 targetHeight = 1080;
             }
@@ -500,30 +486,26 @@
             canvas.height = targetHeight;
             
             try {
-                // STEP 2: Extract frame array data instantly
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 temporaryCapturedDataUrl = canvas.toDataURL('image/png');
-                
-                // STEP 3: Halt video play lines so the inspector sees a crisp frozen frame confirmation
-                video.pause();
+                video.pause(); // Freeze frame visually
                 showToast("High fidelity image trapped in local buffer.", "info");
             } catch (err) {
-                console.error("Frame freeze tracking array error:", err);
+                console.error("Frame freeze error:", err);
                 retryShutterVideoFeed();
-                showToast("Frame processing capture failure. Retrying stream.", "danger");
+                showToast("Frame processing capture failure.", "danger");
             }
         }
 
         function retryShutterVideoFeed() {
-            // Reset controls layout back to operational default
-            document.getElementById('capture-initial-zone').style.display = 'flex';
-            document.getElementById('capture-decision-zone').style.display = 'none';
-            
+            document.getElementById('capture-initial-zone').style.style.display = 'flex';
+            document.getElementById('capture-decision-zone').style.style.display = 'none';
             temporaryCapturedDataUrl = null;
             const video = document.getElementById('active-lens-video');
             if (video) video.play();
         }
 
+        /* CORREGIDO: CIERRA LA VENTANA DE LA CÁMARA INMEDIATAMENTE AL ACEPTAR */
         function acceptCurrentPhoto() {
             if (!temporaryCapturedDataUrl) return showToast("No snapshot payload found!", "danger");
             
@@ -539,26 +521,39 @@
             renderPhotoThumbnailInField(activeFieldTargetId, temporaryCapturedDataUrl, fname);
             backupCurrentStateToLocalStorage();
             
-            showToast("Photo synchronized with checklist context.", "success");
+            showToast("Photo synced with checklist context.", "success");
+            
+            // Forzar el cierre de la ventana de la cámara de forma garantizada antes de apagar hardware
             closeHardwareStreaming();
         }
 
         function renderPhotoThumbnailInField(fieldId, src, name) {
             document.getElementById(`cam_status_${fieldId}`).innerHTML = `<span class="photo-filename-label">🟢 Linked: ${name}</span>`;
             document.getElementById(`img_preview_${fieldId}`).src = src;
-            document.getElementById(`preview_container_${fieldId}`).style.display = 'block';
+            document.getElementById(`preview_container_${fieldId}`).style.style.display = 'block';
         }
 
+        /* CORREGIDO: RESETEO INTEGRAL DEL VISOR Y REMOCIÓN DE STREAMINGS */
         function closeHardwareStreaming() {
-            document.getElementById('hardware-viewfinder-modal').style.display = 'none';
+            // Cierre visual absoluto de la capa modal
+            document.getElementById('hardware-viewfinder-modal').style.style.display = 'none';
+            
+            // Liberación de hardware nativo de la cámara
             if (globalCameraStream) {
                 try {
-                    globalCameraStream.getTracks().forEach(t => t.stop());
-                } catch(e) { console.error(e); }
+                    globalCameraStream.getTracks().forEach(track => track.stop());
+                } catch(e) { console.error("Error shutting down camera tracks:", e); }
                 globalCameraStream = null;
             }
+            
+            // Limpieza del elemento video para romper la retención de pantalla
             const video = document.getElementById('active-lens-video');
-            if (video) video.srcObject = null;
+            if (video) {
+                video.pause();
+                video.srcObject = null;
+            }
+            
+            temporaryCapturedDataUrl = null;
         }
 
         function backupCurrentStateToLocalStorage() {
@@ -606,7 +601,6 @@
             }
         }
 
-        /* LOCAL DIRECTORY API EXPORT ROUTINE */
         async function saveCurrentInspection() {
             const inspector = document.getElementById('ins-inspector').value;
             const serial = document.getElementById('ins-serial').value.trim();
@@ -618,7 +612,7 @@
             }
             
             if (!window.showDirectoryPicker) {
-                return showToast("Your mobile browser does not support physical File Directory instantiation. Use an updated Chrome or Edge app.", "danger");
+                return showToast("Your browser does not support physical File Directory instantiation. Use Chrome or Edge.", "danger");
             }
 
             showToast("Processing high-fidelity frames locally... Please wait.", "info");
@@ -652,19 +646,17 @@
             const folderName = `${serial}_${cleanInspector}_${dateStr}`;
 
             try {
-                showToast("Select target root folder location inside your device system.", "warning");
+                showToast("Select target root folder location inside your device storage.", "warning");
                 const directoryHandle = await window.showDirectoryPicker();
-                
-                // Create native subfolder dynamically
                 const inspectionFolderHandle = await directoryHandle.getDirectoryHandle(folderName, { create: true });
                 
-                // Save JSON compilation profile
+                // Write Meta Document
                 const reportFileHandle = await inspectionFolderHandle.getFileHandle(`REPORT_DATA_${serial}.json`, { create: true });
                 const reportWritable = await reportFileHandle.createWritable();
                 await reportWritable.write(JSON.stringify(reportMeta, null, 2));
                 await reportWritable.close();
 
-                // Save uncompressed imagery individual streams
+                // Process Binary Array Streams
                 for (const fieldId in currentActivePhotos) {
                     const photoMeta = currentActivePhotos[fieldId];
                     if (photoMeta && photoMeta.dataUrl) {
@@ -684,7 +676,7 @@
                 }
 
                 localStorage.removeItem(`workorder_buffer_${serial}`);
-                showToast(`📦 Local folder '${folderName}' generated and verified on local device storage successfully!`, "success");
+                showToast(`📦 Local folder '${folderName}' generated on storage successfully!`, "success");
                 resetForm();
             } catch (err) {
                 console.error("Local storage API failure:", err);
@@ -696,7 +688,7 @@
             document.getElementById('ins-serial').value = '';
             document.getElementById('recovery-work-order').value = '';
             document.getElementById('ins-production-line').value = '';
-            document.getElementById('dynamic-form-card').style.display = 'none';
+            document.getElementById('dynamic-form-card').style.style.display = 'none';
             currentActivePhotos = {};
         }
     </script>
