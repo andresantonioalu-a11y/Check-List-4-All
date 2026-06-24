@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InspectFlow Pro - Quality Inspection System</title>
     
+    <!-- Librería JSZip para la compilación del directorio y empaquetado final -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <style>
@@ -112,6 +113,7 @@
         <button id="btn-nav-admin" class="nav-btn" onclick="switchView('admin-view', this)">Admin Control Dashboard</button>
     </nav>
 
+    <!-- VIEWER PANELS: INSPECTOR VIEW -->
     <div id="inspector-view" class="view-panel active">
         <div class="grid-2">
             <div class="card">
@@ -185,6 +187,7 @@
             </div>
         </div>
 
+        <!-- DYNAMIC FORM CHECKPOINTS -->
         <div class="card" id="dynamic-form-card" style="display: none; margin-top: 20px;">
             <div class="card-title" id="dynamic-form-title">Operational Control Form</div>
             <div id="dynamic-fields-container"></div>
@@ -197,6 +200,7 @@
         </div>
     </div>
 
+    <!-- VIEWER PANELS: ADMIN CREATOR VIEW -->
     <div id="admin-view" class="view-panel">
         <div class="grid-2">
             <div class="card">
@@ -238,6 +242,7 @@
         </div>
     </div>
 
+    <!-- HARDWARE FULL SCREEN VIEWFINDER OVERLAY -->
     <div id="hardware-viewfinder-modal">
         <div class="viewfinder-header">
             <div class="viewfinder-checkpoint-title" id="viewfinder-target-display">CHECKPOINT TARGET</div>
@@ -263,6 +268,7 @@
     <canvas id="hidden-bg-canvas" style="display:none;"></canvas>
     <div id="toast-container"></div>
 
+    <!-- GLOBAL LOGIC APPLICATION SYSTEM SCRIPT -->
     <script>
         let localTemplatesCache = [];
         let currentActivePhotos = {};
@@ -271,6 +277,7 @@
         let temporaryCapturedDataUrl = null;
 
         window.onload = function() {
+            // Plantilla de demostración por defecto para iniciar la interfaz
             localTemplatesCache = [
                 {
                     id: "tmpl_doas_sample",
@@ -287,10 +294,9 @@
             renderAdminDashboard();
             addCheckpointRowToCreator(); 
             
-            // Auto-completar el cierre faltante que tenías al final de tu archivo original
             const storedBuffers = Object.keys(localStorage).filter(k => k.startsWith('workorder_buffer_'));
             if(storedBuffers.length > 0) {
-                console.log("Buffered cache sessions available for recovery tracking.");
+                console.log("Cached sessions available for recovery tracking.");
             }
         };
 
@@ -445,7 +451,6 @@
             
             document.getElementById('viewfinder-target-display').innerText = questionText;
             
-            // CORREGIDO: Eliminados los errores de .style.style.display
             document.getElementById('capture-initial-zone').style.display = 'flex';
             document.getElementById('capture-decision-zone').style.display = 'none';
             document.getElementById('hardware-viewfinder-modal').style.display = 'flex';
@@ -455,18 +460,41 @@
                     globalCameraStream.getTracks().forEach(t => t.stop());
                 }
 
-                globalCameraStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }, 
-                    audio: false 
-                });
+                // CONFIGURACIÓN ULTRA-COMPATIBLE MÓVIL (Fuerza lente posterior sin sobrecargar resolución)
+                const constraints = {
+                    video: { 
+                        facingMode: { exact: "environment" },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                };
+
+                try {
+                    globalCameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+                } catch (matchErr) {
+                    console.warn("Fallo con exact:environment, intentando fallback de ambiente suave...");
+                    globalCameraStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: "environment" },
+                        audio: false
+                    });
+                }
+
                 const video = document.getElementById('active-lens-video');
                 video.srcObject = globalCameraStream;
+                
+                // Atributos requeridos para visualización inline segura en iOS/Safari
                 video.setAttribute("playsinline", true);
+                video.setAttribute("webkit-playsinline", true);
                 video.muted = true;
-                video.play();
+                
+                video.onloadedmetadata = function() {
+                    video.play().catch(e => console.error("Video stream execution failure:", e));
+                };
+
             } catch (err) { 
                 console.error("Camera linkage hardware failure:", err);
-                showToast("Hardware lens call error. Verify browser permissions.", "danger");
+                showToast("Error de hardware. Revisa los permisos de la cámara en tu navegador.", "danger");
                 closeHardwareStreaming(); 
             }
         }
@@ -477,13 +505,11 @@
             
             if (!video || !canvas) return showToast("Hardware mapping interface exception.", "danger");
 
-            // CORREGIDO: Corregida sintaxis de la UI
             document.getElementById('capture-initial-zone').style.display = 'none';
             document.getElementById('capture-decision-zone').style.display = 'flex';
 
             const ctx = canvas.getContext('2d');
             
-            // CORREGIDO: Si el stream asíncrono no ha cargado dimensiones en móvil, hereda de inmediato del contenedor real
             let targetWidth = video.videoWidth || video.clientWidth || 1280;
             let targetHeight = video.videoHeight || video.clientHeight || 720;
             
@@ -493,8 +519,7 @@
             try {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 
-                // OPTIMIZACIÓN DE MEMORIA: Cambiado de PNG (pesado) a JPEG con calidad 0.75 
-                // Esto reduce el tamaño de base64 un 80% y previene que el LocalStorage colapse en el teléfono.
+                // Compresión a JPEG para evitar llenar el almacenamiento del LocalStorage
                 temporaryCapturedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
                 video.pause(); 
                 showToast("Image captured in buffer.", "info");
@@ -506,7 +531,6 @@
         }
 
         function retryShutterVideoFeed() {
-            // CORREGIDO: .style.style corregido
             document.getElementById('capture-initial-zone').style.display = 'flex';
             document.getElementById('capture-decision-zone').style.display = 'none';
             temporaryCapturedDataUrl = null;
@@ -536,12 +560,10 @@
         function renderPhotoThumbnailInField(fieldId, src, name) {
             document.getElementById(`cam_status_${fieldId}`).innerHTML = `<span class="photo-filename-label">🟢 Linked: ${name}</span>`;
             document.getElementById(`img_preview_${fieldId}`).src = src;
-            // CORREGIDO: .style.style corregido
             document.getElementById(`preview_container_${fieldId}`).style.display = 'block';
         }
 
         function closeHardwareStreaming() {
-            // CORREGIDO: .style.style corregido
             document.getElementById('hardware-viewfinder-modal').style.display = 'none';
             
             if (globalCameraStream) {
@@ -601,13 +623,82 @@
                 loadInspectionForm(state);
                 showToast("Session recovered successfully!", "success");
             } catch(e) {
-                showToast("Error reading the buffer.", "danger");
+                showToast("Error reading cache stream buffer data.", "danger");
             }
         }
 
         function saveCurrentInspection() {
-            showToast("Data export logic triggers directory compiler.", "success");
-            // Aquí puedes añadir tu script con JSZip para empaquetar el checklist y las fotos en un zip.
+            const serial = document.getElementById('ins-serial').value.trim();
+            const templateId = document.getElementById('ins-template-select').value;
+            const inspectorStart = document.getElementById('ins-inspector').value;
+            const inspectorEnd = document.getElementById('ins-inspector-end').value;
+            const line = document.getElementById('ins-production-line').value;
+
+            if (!serial || !templateId) {
+                return showToast("No active inspection data to export. Verify Serial & Checklist.", "danger");
+            }
+
+            const template = localTemplatesCache.find(t => t.id === templateId);
+            if (!template) return showToast("Template schema mismatch.", "danger");
+
+            showToast("Compiling directory structures and assets...", "info");
+
+            const zip = new JSZip();
+            
+            // Generación de jerarquía de directorios raíz
+            const rootFolderName = `${serial}_INSPECTION_REPORT`;
+            const rootFolder = zip.folder(rootFolderName);
+            const photoFolder = rootFolder.folder("Evidence_Photos");
+
+            // Estructuración del archivo de texto del reporte resumen
+            let reportText = `==================================================\n`;
+            reportText += `INSPECTFLOW PRO - QUALITY CONTROL REPORT\n`;
+            reportText += `==================================================\n`;
+            reportText += `Work Order / Serial: ${serial}\n`;
+            reportText += `Checklist Protocol:  ${template.name} (${template.dept})\n`;
+            reportText += `Production Area:     ${line || 'Not Specified'}\n`;
+            reportText += `Starting Inspector:  ${inspectorStart || 'Not Specified'}\n`;
+            reportText += `Closing Inspector:   ${inspectorEnd || 'Not Specified'}\n`;
+            reportText += `Export Timestamp:    ${new Date().toLocaleString()}\n`;
+            reportText += `==================================================\n\n`;
+            reportText += `CHECKPOINT METRICS & OBSERVATIONS:\n`;
+            reportText += `--------------------------------------------------\n`;
+
+            template.fields.forEach((field, index) => {
+                const inputEl = document.getElementById(`comment_${field.id}`);
+                const observation = inputEl ? inputEl.value.trim() : "";
+                const photoMeta = currentActivePhotos[field.id];
+                
+                reportText += `${index + 1}. Q: ${field.question}\n`;
+                reportText += `   Spec: [${field.spec}]\n`;
+                reportText += `   Obs:  ${observation || "Passed / No Remarks"}\n`;
+                reportText += `   Photo: ${photoMeta ? photoMeta.filename : "None Attached"}\n`;
+                reportText += `--------------------------------------------------\n`;
+
+                if (photoMeta && photoMeta.dataUrl) {
+                    const base64Data = photoMeta.dataUrl.split(',')[1];
+                    photoFolder.file(photoMeta.filename, base64Data, { base64: true });
+                }
+            });
+
+            rootFolder.file(`${serial}_Inspection_Summary.txt`, reportText);
+
+            // Generación binaria y descarga automática del empaquetado .ZIP
+            zip.generateAsync({ type: "blob" })
+                .then(function(content) {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(content);
+                    link.download = `${serial}_QA_Package.zip`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    showToast("📦 QA Directory Package successfully exported!", "success");
+                })
+                .catch(function(err) {
+                    console.error("ZIP Generation Failure:", err);
+                    showToast("Failed to compile ZIP archive folder structure.", "danger");
+                });
         }
     </script>
 </body>
