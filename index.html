@@ -37,15 +37,17 @@
         .nav-btn { background: none; border: none; color: #cbd5e1; padding: 14px 24px; font-size: 14px; font-weight: 600; cursor: pointer; border-bottom: 4px solid transparent; }
         .nav-btn.active { color: white; border-bottom-color: var(--accent); background-color: rgba(255,255,255,0.12); }
 
-        .view-panel { display: none !important; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        /* MANEJO DE VISTAS LIMPIO PARA EVITAR BLOQUEOS */
+        .view-panel { display: none; padding: 20px; max-width: 1200px; margin: 0 auto; }
         .view-panel.active { display: block !important; }
+        
         .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin-bottom: 20px; }
         
         .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .card-title { font-size: 16px; font-weight: 600; color: var(--primary); margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
         
         .form-group { margin-bottom: 15px; }
-        .form-group row-layout { display: flex; gap: 10px; align-items: flex-end; }
+        .form-group.row-layout { display: flex; gap: 10px; align-items: flex-end; }
         label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background: #fff; }
 
@@ -296,4 +298,400 @@
             if (type === 'danger') toast.style.backgroundColor = 'var(--danger)';
             toast.innerHTML = `<span>${message}</span>`;
             container.appendChild(toast);
-            setTimeout(() => { toast.remove(); },
+            setTimeout(() => { toast.remove(); }, 5000);
+        }
+
+        // FUNCIÓN DE NAVEGACIÓN TOTALMENTE CORREGIDA
+        function switchView(viewId, clickedButton) {
+            document.querySelectorAll('.view-panel').forEach(p => {
+                p.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            
+            const targetPanel = document.getElementById(viewId);
+            if (targetPanel) {
+                targetPanel.classList.add('active');
+            }
+            
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
+            
+            if (viewId === 'admin-view') {
+                renderAdminDashboard();
+            }
+        }
+
+        function addCheckpointRowToCreator() {
+            const container = document.getElementById('adm-checkpoint-inputs-container');
+            const rowIndex = container.children.length + 1;
+            
+            const row = document.createElement('div');
+            row.className = 'checkpoint-entry-row';
+            row.id = `adm_row_${rowIndex}`;
+            row.innerHTML = `
+                <input type="text" class="adm-input-q" placeholder="Checkpoint Question #${rowIndex}">
+                <input type="text" class="adm-input-s" placeholder="Specification (e.g. No Leaks)">
+                <button class="btn btn-danger" style="padding: 10px;" onclick="document.getElementById('adm_row_${rowIndex}').remove()">🗑️</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function saveCompiledTemplate() {
+            const name = document.getElementById('adm-template-name').value.trim();
+            const dept = document.getElementById('adm-template-dept').value;
+            if (!name) return showToast("Please input a DOAS Model Name", "danger");
+
+            const qInputs = document.querySelectorAll('.adm-input-q');
+            const sInputs = document.querySelectorAll('.adm-input-s');
+            
+            let compiledFields = [];
+            qInputs.forEach((input, index) => {
+                const questionText = input.value.trim();
+                const specText = sInputs[index] ? sInputs[index].value.trim() : "Standard Check";
+                if (questionText) {
+                    compiledFields.push({
+                        id: `f_custom_${Date.now()}_${index}`,
+                        question: questionText,
+                        spec: specText
+                    });
+                }
+            });
+
+            if (compiledFields.length === 0) return showToast("Please add at least one checkpoint.", "danger");
+
+            localTemplatesCache.push({ id: `tmpl_${Date.now()}`, name: name, dept: dept, fields: compiledFields });
+            updateFormTemplateDropdown();
+            renderAdminDashboard();
+            
+            document.getElementById('adm-template-name').value = '';
+            document.getElementById('adm-checkpoint-inputs-container').innerHTML = '';
+            addCheckpointRowToCreator();
+            showToast(`Checklist for '${name}' compiled!`, "success");
+        }
+
+        function updateFormTemplateDropdown() {
+            const select = document.getElementById('ins-template-select');
+            select.innerHTML = '<option value="">-- Select Checklist --</option>';
+            localTemplatesCache.forEach(t => {
+                const opt = document.createElement('option'); opt.value = t.id; opt.innerText = `[${t.dept}] ${t.name}`; select.appendChild(opt);
+            });
+        }
+
+        function renderAdminDashboard() {
+            const adminContainer = document.getElementById('admin-templates-list');
+            if (!adminContainer) return;
+            adminContainer.innerHTML = '';
+            
+            if (localTemplatesCache.length === 0) {
+                adminContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted);">No Active Protocols.</div>';
+                return;
+            }
+
+            localTemplatesCache.forEach(template => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
+                    <div class="list-item-header">
+                        <span>${template.name}</span>
+                        <span class="list-item-badge">${template.dept}</span>
+                    </div>
+                    <div class="list-item-details">
+                        <strong>Template ID:</strong> ${template.id} <br>
+                        <strong>Total Checkpoints:</strong> ${template.fields.length} items.
+                    </div>
+                `;
+                adminContainer.appendChild(item);
+            });
+        }
+
+        function loadInspectionForm(recoveredState = null) {
+            const templateId = recoveredState ? recoveredState.templateId : document.getElementById('ins-template-select').value;
+            if (!recoveredState) document.getElementById('ins-template-select').value = templateId;
+            
+            const container = document.getElementById('dynamic-fields-container');
+            const formCard = document.getElementById('dynamic-form-card');
+            if (!templateId) { formCard.style.display = 'none'; return; }
+            
+            const template = localTemplatesCache.find(t => t.id === templateId);
+            formCard.style.display = 'block';
+            container.innerHTML = '';
+            
+            currentActivePhotos = recoveredState ? recoveredState.photos || {} : {};
+
+            template.fields.forEach(field => {
+                const block = document.createElement('div'); block.className = 'inspection-field-block';
+                const savedComment = recoveredState && recoveredState.comments[field.id] ? recoveredState.comments[field.id] : '';
+                
+                block.innerHTML = `
+                    <div class="field-question">${field.question} <span class="field-spec">(${field.spec})</span></div>
+                    <div class="form-group"><input type="text" id="comment_${field.id}" value="${savedComment}" placeholder="Enter observations/measurements" oninput="backupCurrentStateToLocalStorage()"></div>
+                    <div class="simplified-camera-zone">
+                        <div class="camera-controls-row">
+                            <div class="camera-status-indicator" id="cam_status_${field.id}"><span>No Photo Attached</span></div>
+                            <button class="btn btn-secondary" onclick="openHardwareViewfinder('${field.id}', '${field.question}')">📸 Capture</button>
+                        </div>
+                        <div class="photo-preview-container" id="preview_container_${field.id}"><img id="img_preview_${field.id}" src=""></div>
+                    </div>
+                `;
+                container.appendChild(block);
+
+                if (currentActivePhotos[field.id]) {
+                    renderPhotoThumbnailInField(field.id, currentActivePhotos[field.id].dataUrl, currentActivePhotos[field.id].filename);
+                }
+            });
+        }
+
+        async function openHardwareViewfinder(fieldId, questionText) {
+            const serial = document.getElementById('ins-serial').value.trim();
+            const inspector = document.getElementById('ins-inspector').value;
+            if (!serial || !inspector) return showToast("Set Serial and Inspector first!", "danger");
+
+            activeFieldTargetId = fieldId;
+            temporaryCapturedDataUrl = null;
+            
+            document.getElementById('viewfinder-target-display').innerText = questionText;
+            document.getElementById('capture-initial-zone').style.display = 'flex';
+            document.getElementById('capture-decision-zone').style.display = 'none';
+            document.getElementById('hardware-viewfinder-modal').style.display = 'flex';
+
+            try {
+                if(globalCameraStream) {
+                    globalCameraStream.getTracks().forEach(t => t.stop());
+                }
+
+                const constraints = {
+                    video: { 
+                        facingMode: { exact: "environment" },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                };
+
+                try {
+                    globalCameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+                } catch (matchErr) {
+                    globalCameraStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: "environment" },
+                        audio: false
+                    });
+                }
+
+                const video = document.getElementById('active-lens-video');
+                video.srcObject = globalCameraStream;
+                video.setAttribute("playsinline", true);
+                video.setAttribute("webkit-playsinline", true);
+                video.muted = true;
+                
+                video.onloadedmetadata = function() {
+                    video.play().catch(e => console.error(e));
+                };
+
+            } catch (err) { 
+                console.error(err);
+                showToast("Error de hardware. Revisa los permisos de la cámara.", "danger");
+                closeHardwareStreaming(); 
+            }
+        }
+
+        function executeShutterSnapshot() {
+            const video = document.getElementById('active-lens-video');
+            const canvas = document.getElementById('hidden-bg-canvas');
+            if (!video || !canvas) return;
+
+            document.getElementById('capture-initial-zone').style.display = 'none';
+            document.getElementById('capture-decision-zone').style.display = 'flex';
+
+            const ctx = canvas.getContext('2d');
+            
+            // CAPTURA A MÁXIMA DEFINICIÓN REAL DEL SENSOR
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            try {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                // Calidad 1.0 (sin compresión destructiva)
+                temporaryCapturedDataUrl = canvas.toDataURL('image/jpeg', 1.0);
+                video.pause(); 
+            } catch (err) {
+                console.error(err);
+                retryShutterVideoFeed();
+            }
+        }
+
+        function retryShutterVideoFeed() {
+            document.getElementById('capture-initial-zone').style.display = 'flex';
+            document.getElementById('capture-decision-zone').style.display = 'none';
+            temporaryCapturedDataUrl = null;
+            const video = document.getElementById('active-lens-video');
+            if (video) video.play();
+        }
+
+        function acceptCurrentPhoto() {
+            if (!temporaryCapturedDataUrl) return showToast("No snapshot payload found!", "danger");
+            
+            const serial = document.getElementById('ins-serial').value.trim() || "NO_WO";
+            const inspector = document.getElementById('ins-inspector').value || "QA";
+            
+            // Extraer las iniciales automáticamente (e.g., "Alex Vazquez" -> "AV")
+            const initials = inspector
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase())
+                .join('')
+                .replace(/[^A-Z]/g, '');
+
+            // Obtener Fecha y Hora limpia (YYYY-MM-DD y HH-MM-SS)
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+            
+            // Nombre exacto solicitado: Fecha_Hora_Iniciales_WorkOrder.jpg
+            const fname = `${dateStr}_${timeStr}_${initials}_${serial}.jpg`;
+            
+            currentActivePhotos[activeFieldTargetId] = { filename: fname, dataUrl: temporaryCapturedDataUrl };
+            
+            renderPhotoThumbnailInField(activeFieldTargetId, temporaryCapturedDataUrl, fname);
+            backupCurrentStateToLocalStorage();
+            
+            showToast("Photo synced with high-definition context.", "success");
+            closeHardwareStreaming();
+        }
+
+        function renderPhotoThumbnailInField(fieldId, src, name) {
+            document.getElementById(`cam_status_${fieldId}`).innerHTML = `<span class="photo-filename-label">🟢 Linked: ${name}</span>`;
+            document.getElementById(`img_preview_${fieldId}`).src = src;
+            document.getElementById(`preview_container_${fieldId}`).style.display = 'block';
+        }
+
+        function closeHardwareStreaming() {
+            document.getElementById('hardware-viewfinder-modal').style.display = 'none';
+            if (globalCameraStream) {
+                try { globalCameraStream.getTracks().forEach(track => track.stop()); } catch(e) {}
+                globalCameraStream = null;
+            }
+            const video = document.getElementById('active-lens-video');
+            if (video) { video.pause(); video.srcObject = null; }
+            temporaryCapturedDataUrl = null;
+        }
+
+        function backupCurrentStateToLocalStorage() {
+            const serial = document.getElementById('ins-serial').value.trim();
+            const templateId = document.getElementById('ins-template-select').value;
+            if (!serial || !templateId) return;
+
+            const template = localTemplatesCache.find(t => t.id === templateId);
+            let commentsData = {};
+            template.fields.forEach(f => {
+                const inputEl = document.getElementById(`comment_${f.id}`);
+                if (inputEl) commentsData[f.id] = inputEl.value.trim();
+            });
+
+            localStorage.setItem(`workorder_buffer_${serial}`, JSON.stringify({
+                serial: serial,
+                templateId: templateId,
+                inspectorStart: document.getElementById('ins-inspector').value,
+                inspectorEnd: document.getElementById('ins-inspector-end').value,
+                productionLine: document.getElementById('ins-production-line').value,
+                comments: commentsData,
+                photos: currentActivePhotos,
+                timestamp: Date.now()
+            }));
+        }
+
+        function recoverInspectionSession() {
+            const serial = document.getElementById('recovery-work-order').value.trim();
+            if(!serial) return showToast("Enter a serial number to recover.", "danger");
+            
+            const rawData = localStorage.getItem(`workorder_buffer_${serial}`);
+            if(!rawData) return showToast("No buffer found for this serial number.", "danger");
+            
+            try {
+                const state = JSON.parse(rawData);
+                document.getElementById('ins-serial').value = state.serial;
+                document.getElementById('ins-inspector').value = state.inspectorStart;
+                document.getElementById('ins-inspector-end').value = state.inspectorEnd;
+                document.getElementById('ins-production-line').value = state.productionLine;
+                
+                loadInspectionForm(state);
+                showToast("Session recovered successfully!", "success");
+            } catch(e) {
+                showToast("Error reading cache stream buffer data.", "danger");
+            }
+        }
+
+        function saveCurrentInspection() {
+            const serial = document.getElementById('ins-serial').value.trim();
+            const templateId = document.getElementById('ins-template-select').value;
+            const inspectorStart = document.getElementById('ins-inspector').value;
+            const inspectorEnd = document.getElementById('ins-inspector-end').value;
+            const line = document.getElementById('ins-production-line').value;
+
+            if (!serial || !templateId) {
+                return showToast("No active inspection data to export. Verify Serial & Checklist.", "danger");
+            }
+
+            const template = localTemplatesCache.find(t => t.id === templateId);
+            if (!template) return showToast("Template schema mismatch.", "danger");
+
+            showToast("Compiling directory structures and high-def assets...", "info");
+
+            const zip = new JSZip();
+            const rootFolderName = `${serial}_INSPECTION_REPORT`;
+            const rootFolder = zip.folder(rootFolderName);
+            const photoFolder = rootFolder.folder("Evidence_Photos");
+
+            let reportText = `==================================================\n`;
+            reportText += `INSPECTFLOW PRO - QUALITY CONTROL REPORT\n`;
+            reportText += `==================================================\n`;
+            reportText += `Work Order / Serial: ${serial}\n`;
+            reportText += `Checklist Protocol:  ${template.name} (${template.dept})\n`;
+            reportText += `Production Area:     ${line || 'Not Specified'}\n`;
+            reportText += `Starting Inspector:  ${inspectorStart || 'Not Specified'}\n`;
+            reportText += `Closing Inspector:   ${inspectorEnd || 'Not Specified'}\n`;
+            reportText += `Export Timestamp:    ${new Date().toLocaleString()}\n`;
+            reportText += `==================================================\n\n`;
+            reportText += `CHECKPOINT METRICS & OBSERVATIONS:\n`;
+            reportText += `--------------------------------------------------\n`;
+
+            template.fields.forEach((field, index) => {
+                const inputEl = document.getElementById(`comment_${field.id}`);
+                const observation = inputEl ? inputEl.value.trim() : "";
+                const photoMeta = currentActivePhotos[field.id];
+                
+                reportText += `${index + 1}. Q: ${field.question}\n`;
+                reportText += `   Spec: [${field.spec}]\n`;
+                reportText += `   Obs:  ${observation || "Passed / No Remarks"}\n`;
+                reportText += `   Photo: ${photoMeta ? photoMeta.filename : "None Attached"}\n`;
+                reportText += `--------------------------------------------------\n`;
+
+                if (photoMeta && photoMeta.dataUrl) {
+                    const base64Data = photoMeta.dataUrl.split(',')[1];
+                    photoFolder.file(photoMeta.filename, base64Data, { base64: true });
+                }
+            });
+
+            rootFolder.file(`${serial}_Inspection_Summary.txt`, reportText);
+
+            zip.generateAsync({ type: "blob" })
+                .then(function(content) {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(content);
+                    link.download = `${serial}_QA_Package.zip`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    showToast("📦 QA Directory Package successfully exported!", "success");
+                })
+                .catch(function(err) {
+                    console.error(err);
+                    showToast("Failed to compile ZIP archive.", "danger");
+                });
+        }
+    </script>
+</body>
+</html>
