@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InspectFlow Pro - Quality Inspection System</title>
+    <title>InspectFlow Pro - Local Quality Inspection</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
@@ -37,9 +37,8 @@
         .nav-btn { background: none; border: none; color: #cbd5e1; padding: 14px 24px; font-size: 14px; font-weight: 600; cursor: pointer; border-bottom: 4px solid transparent; }
         .nav-btn.active { color: white; border-bottom-color: var(--accent); background-color: rgba(255,255,255,0.12); }
 
-        /* MANEJO DE VISTAS LIMPIO PARA EVITAR BLOQUEOS */
         .view-panel { display: none; padding: 20px; max-width: 1200px; margin: 0 auto; }
-        .view-panel.active { display: block !important; }
+        .view-panel.visible-panel { display: block; }
         
         .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin-bottom: 20px; }
         
@@ -73,7 +72,6 @@
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
         .toast { background-color: var(--primary); color: white; padding: 12px 20px; border-radius: 6px; margin-top: 10px; font-size: 13px; display: flex; gap: 15px; align-items: center; }
         
-        /* FULL SCREEN OVERLAY VIEWFINDER */
         #hardware-viewfinder-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #000; z-index: 9999; flex-direction: column; justify-content: space-between; align-items: center; padding: 20px 10px; }
         .viewfinder-header { color: white; text-align: center; width: 100%; padding: 5px 0; }
         .viewfinder-checkpoint-title { font-size: 16px; font-weight: 600; color: #38bdf8; text-transform: uppercase; margin-bottom: 4px; }
@@ -85,7 +83,6 @@
         .photo-action-cluster { display: grid; grid-template-columns: 1fr; gap: 12px; width: 100%; }
         .photo-action-cluster.split-layout { grid-template-columns: 1fr 1fr; }
 
-        /* LIST PANELS */
         .items-list { max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; background: #f1f5f9; padding: 10px; }
         .list-item { padding: 15px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; background: white; display: flex; flex-direction: column; gap: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .list-item-header { display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: var(--primary); }
@@ -101,11 +98,11 @@
     <header>
         <div class="logo-area">
             <h1>InspectFlow Pro</h1>
-            <span>DOAS Units, Leak Check & Final Inspection</span>
+            <span>🔒 Local Sandbox (No Cloud Sync)</span>
         </div>
         <div id="connection-indicator" class="connection-status local-secure">
             <div class="status-dot"></div>
-            <span id="connection-text">LocalStorage Offline Secure</span>
+            <span id="connection-text">Total Privacy Verification Active</span>
         </div>
     </header>
 
@@ -114,7 +111,7 @@
         <button id="btn-nav-admin" class="nav-btn" onclick="switchView('admin-view', this)">Admin Control Dashboard</button>
     </nav>
 
-    <div id="inspector-view" class="view-panel active">
+    <div id="inspector-view" class="view-panel visible-panel">
         <div class="grid-2">
             <div class="card">
                 <div class="unit-profile-zone">
@@ -176,13 +173,13 @@
             </div>
 
             <div class="card">
-                <div class="card-title">Crash Recovery Tool</div>
+                <div class="card-title">Local Crash Recovery</div>
                 <div class="form-group row-layout">
                     <div style="flex: 1;">
                         <label for="recovery-work-order">Call Work Order Number</label>
                         <input type="text" id="recovery-work-order" placeholder="Enter Serial to Resume">
                     </div>
-                    <button class="btn btn-warning" onclick="recoverInspectionSession()">Resume Unit Inspection</button>
+                    <button class="btn btn-warning" onclick="recoverInspectionSession()">Resume Local Buffer</button>
                 </div>
             </div>
         </div>
@@ -193,7 +190,7 @@
             
             <div class="master-completion-zone">
                 <button class="btn btn-success" style="font-size: 18px; padding: 16px 35px; width: 100%; max-width: 500px; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" onclick="saveCurrentInspection()">
-                    💾 EXPORT DATA & CREATE DIRECTORY FOLDER
+                    📦 BUILD PACK & SAVE ZIP TO PHONE
                 </button>
             </div>
         </div>
@@ -301,19 +298,20 @@
             setTimeout(() => { toast.remove(); }, 5000);
         }
 
-        // FUNCIÓN DE NAVEGACIÓN TOTALMENTE CORREGIDA
         function switchView(viewId, clickedButton) {
-            document.querySelectorAll('.view-panel').forEach(p => {
-                p.classList.remove('active');
-            });
+            const panels = document.querySelectorAll('.view-panel');
+            for (let i = 0; i < panels.length; i++) {
+                panels[i].classList.remove('visible-panel');
+            }
             
-            document.querySelectorAll('.nav-btn').forEach(b => {
-                b.classList.remove('active');
-            });
+            const buttons = document.querySelectorAll('.nav-btn');
+            for (let j = 0; j < buttons.length; j++) {
+                buttons[j].classList.remove('active');
+            }
             
             const targetPanel = document.getElementById(viewId);
             if (targetPanel) {
-                targetPanel.classList.add('active');
+                targetPanel.classList.add('visible-panel');
             }
             
             if (clickedButton) {
@@ -507,14 +505,11 @@
             document.getElementById('capture-decision-zone').style.display = 'flex';
 
             const ctx = canvas.getContext('2d');
-            
-            // CAPTURA A MÁXIMA DEFINICIÓN REAL DEL SENSOR
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             
             try {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                // Calidad 1.0 (sin compresión destructiva)
                 temporaryCapturedDataUrl = canvas.toDataURL('image/jpeg', 1.0);
                 video.pause(); 
             } catch (err) {
@@ -537,19 +532,16 @@
             const serial = document.getElementById('ins-serial').value.trim() || "NO_WO";
             const inspector = document.getElementById('ins-inspector').value || "QA";
             
-            // Extraer las iniciales automáticamente (e.g., "Alex Vazquez" -> "AV")
             const initials = inspector
                 .split(' ')
                 .map(word => word.charAt(0).toUpperCase())
                 .join('')
                 .replace(/[^A-Z]/g, '');
 
-            // Obtener Fecha y Hora limpia (YYYY-MM-DD y HH-MM-SS)
             const now = new Date();
             const dateStr = now.toISOString().split('T')[0];
             const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
             
-            // Nombre exacto solicitado: Fecha_Hora_Iniciales_WorkOrder.jpg
             const fname = `${dateStr}_${timeStr}_${initials}_${serial}.jpg`;
             
             currentActivePhotos[activeFieldTargetId] = { filename: fname, dataUrl: temporaryCapturedDataUrl };
@@ -557,7 +549,6 @@
             renderPhotoThumbnailInField(activeFieldTargetId, temporaryCapturedDataUrl, fname);
             backupCurrentStateToLocalStorage();
             
-            showToast("Photo synced with high-definition context.", "success");
             closeHardwareStreaming();
         }
 
@@ -631,18 +622,20 @@
             const line = document.getElementById('ins-production-line').value;
 
             if (!serial || !templateId) {
-                return showToast("No active inspection data to export. Verify Serial & Checklist.", "danger");
+                return showToast("No data to pack. Check Serial & Checklist.", "danger");
             }
 
             const template = localTemplatesCache.find(t => t.id === templateId);
-            if (!template) return showToast("Template schema mismatch.", "danger");
+            if (!template) return showToast("Schema mismatch.", "danger");
 
-            showToast("Compiling directory structures and high-def assets...", "info");
+            showToast("Compiling assets locally on your device...", "info");
 
             const zip = new JSZip();
-            const rootFolderName = `${serial}_INSPECTION_REPORT`;
+            
+            // Nombre limpio de la carpeta raíz dentro del paquete
+            const rootFolderName = `${serial}_REPORT`;
             const rootFolder = zip.folder(rootFolderName);
-            const photoFolder = rootFolder.folder("Evidence_Photos");
+            const photoFolder = rootFolder.folder("Photos");
 
             let reportText = `==================================================\n`;
             reportText += `INSPECTFLOW PRO - QUALITY CONTROL REPORT\n`;
@@ -664,7 +657,7 @@
                 
                 reportText += `${index + 1}. Q: ${field.question}\n`;
                 reportText += `   Spec: [${field.spec}]\n`;
-                reportText += `   Obs:  ${observation || "Passed / No Remarks"}\n`;
+                reportText += `   Obs:  ${observation || "Passed"}\n`;
                 reportText += `   Photo: ${photoMeta ? photoMeta.filename : "None Attached"}\n`;
                 reportText += `--------------------------------------------------\n`;
 
@@ -674,18 +667,21 @@
                 }
             });
 
-            rootFolder.file(`${serial}_Inspection_Summary.txt`, reportText);
+            rootFolder.file(`Summary_${serial}.txt`, reportText);
 
+            // Generar la descarga directa local
             zip.generateAsync({ type: "blob" })
                 .then(function(content) {
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(content);
+                    
+                    // Nombre estandarizado del archivo descargado en tu almacenamiento local
                     link.download = `${serial}_QA_Package.zip`;
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
                     
-                    showToast("📦 QA Directory Package successfully exported!", "success");
+                    showToast("📦 Pack ZIP saved locally to Downloads folder!", "success");
                 })
                 .catch(function(err) {
                     console.error(err);
