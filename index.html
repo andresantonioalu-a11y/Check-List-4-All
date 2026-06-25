@@ -110,7 +110,7 @@
                 <div class="status-dot"></div>
                 <span id="connection-text">Total Privacy Verification</span>
             </div>
-            <div class="script-version-tag">Build: v1.1.1</div>
+            <div class="script-version-tag">Build: v1.1.2</div>
         </div>
     </header>
 
@@ -271,7 +271,7 @@
     <div id="toast-container"></div>
 
     <footer>
-        InspectFlow Pro Sandbox Application v1.1.1 — <strong>Developed by Andres Antonio</strong>
+        InspectFlow Pro Sandbox Application v1.1.2 — <strong>Developed by Andres Antonio</strong>
     </footer>
 
     <script>
@@ -297,6 +297,12 @@
             updateFormTemplateDropdown();
             renderAdminDashboard();
             addCheckpointRowToCreator(); 
+            
+            // Cargar apuntador del último WO si existe en LocalStorage
+            const lastActive = localStorage.getItem('last_active_wo_ptr');
+            if (lastActive && document.getElementById('recovery-work-order')) {
+                document.getElementById('recovery-work-order').value = lastActive;
+            }
         };
 
         function showToast(message, type = 'info') {
@@ -473,11 +479,12 @@
                     globalCameraStream.getTracks().forEach(t => t.stop());
                 }
 
+                // MEJORA DE CALIDAD: Solicitamos resoluciones nativas altas (hasta 4K si el hardware lo permite)
                 const constraints = {
                     video: { 
                         facingMode: { exact: "environment" },
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
+                        width: { ideal: 4096, max: 4096 },
+                        height: { ideal: 2160, max: 2160 }
                     },
                     audio: false
                 };
@@ -486,7 +493,7 @@
                     globalCameraStream = await navigator.mediaDevices.getUserMedia(constraints);
                 } catch (matchErr) {
                     globalCameraStream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: "environment" },
+                        video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
                         audio: false
                     });
                 }
@@ -517,12 +524,15 @@
             document.getElementById('capture-decision-zone').style.display = 'flex';
 
             const ctx = canvas.getContext('2d');
+            
+            // Forzar las dimensiones reales enviadas por el lente físico
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             
             try {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                temporaryCapturedDataUrl = canvas.toDataURL('image/jpeg', 0.85); // Optimizado a 0.85 para reducir carga en memoria móvil
+                // MEJORA DE CALIDAD: Forzado al 1.0 (100% Calidad JPEG sin degradación)
+                temporaryCapturedDataUrl = canvas.toDataURL('image/jpeg', 1.0); 
                 video.pause(); 
             } catch (err) {
                 console.error(err);
@@ -538,7 +548,6 @@
             if (video) video.play();
         }
 
-        // REARQUITECTURA DE FLUJO SEGURO PARA ELIMINAR EL CONGELAMIENTO EN MÓVILES
         function acceptCurrentPhoto() {
             if (!temporaryCapturedDataUrl) return showToast("No snapshot payload found!", "danger");
             
@@ -557,18 +566,15 @@
             
             const fname = `${dateStr}_${timeStr}_${initials}_${serial}.jpg`;
             
-            // 1. Guardar la información en memoria de inmediato
             currentActivePhotos[activeFieldTargetId] = { filename: fname, dataUrl: temporaryCapturedDataUrl };
             
-            // 2. Cerrar el stream de hardware de inmediato para liberar RAM del teléfono
             const targetFieldId = activeFieldTargetId; 
             closeHardwareStreaming();
 
-            // 3. Dejar un respiro de 150ms al procesador antes de pintar la miniatura y escribir el LocalStorage
             setTimeout(() => {
                 renderPhotoThumbnailInField(targetFieldId, currentActivePhotos[targetFieldId].dataUrl, fname);
                 backupCurrentStateToLocalStorage();
-                showToast("Photo attached successfully.", "success");
+                showToast("Photo attached with high definition profile.", "success");
             }, 150);
         }
 
@@ -591,151 +597,136 @@
             document.getElementById('hardware-viewfinder-modal').style.display = 'none';
             if (globalCameraStream) {
                 try { 
-                    globalCameraStream.getTracks().forEach(track => {
-                        track.stop();
-                    }); 
-                } catch(e) { console.error(e); }
+                    globalCameraStream.getTracks().forEach(track => track.stop());
+                } catch(e) { console.error("Error stopping camera tracks:", e); }
                 globalCameraStream = null;
             }
-            const video = document.getElementById('active-lens-video');
-            if (video) { 
-                video.pause(); 
-                video.srcObject = null; 
-            }
-            temporaryCapturedDataUrl = null;
         }
 
         function backupCurrentStateToLocalStorage() {
             const serial = document.getElementById('ins-serial').value.trim();
+            if (!serial) return; 
+
             const templateId = document.getElementById('ins-template-select').value;
-            if (!serial || !templateId) return;
-
+            const comments = {};
+            
             const template = localTemplatesCache.find(t => t.id === templateId);
-            let commentsData = {};
-            template.fields.forEach(f => {
-                const inputEl = document.getElementById(`comment_${f.id}`);
-                if (inputEl) commentsData[f.id] = inputEl.value.trim();
-            });
+            if (template) {
+                template.fields.forEach(f => {
+                    const el = document.getElementById(`comment_${f.id}`);
+                    comments[f.id] = el ? el.value : '';
+                });
+            }
 
-            localStorage.setItem(`workorder_buffer_${serial}`, JSON.stringify({
+            const sessionData = {
                 serial: serial,
-                templateId: templateId,
                 inspectorStart: document.getElementById('ins-inspector').value,
                 inspectorEnd: document.getElementById('ins-inspector-end').value,
-                productionLine: document.getElementById('ins-production-line').value,
-                comments: commentsData,
-                photos: currentActivePhotos,
+                line: document.getElementById('ins-production-line').value,
+                templateId: templateId,
+                comments: comments,
+                photos: currentActivePhotos, 
                 timestamp: Date.now()
-            }));
+            };
+
+            localStorage.setItem(`iff_buffer_${serial}`, JSON.stringify(sessionData));
+            localStorage.setItem('last_active_wo_ptr', serial);
         }
 
         function recoverInspectionSession() {
             const serial = document.getElementById('recovery-work-order').value.trim();
-            if(!serial) return showToast("Enter a serial number to recover.", "danger");
-            
-            const rawData = localStorage.getItem(`workorder_buffer_${serial}`);
-            if(!rawData) return showToast("No buffer found for this serial number.", "danger");
-            
+            if (!serial) return showToast("Please provide a Serial Number to pull.", "danger");
+
+            const raw = localStorage.getItem(`iff_buffer_${serial}`);
+            if (!raw) return showToast("No local buffer found for that Serial.", "danger");
+
             try {
-                const state = JSON.parse(rawData);
+                const state = JSON.parse(raw);
+                
                 document.getElementById('ins-serial').value = state.serial;
                 document.getElementById('ins-inspector').value = state.inspectorStart;
                 document.getElementById('ins-inspector-end').value = state.inspectorEnd;
-                document.getElementById('ins-production-line').value = state.productionLine;
+                document.getElementById('ins-production-line').value = state.line;
                 
                 loadInspectionForm(state);
-                showToast("Session recovered successfully!", "success");
-            } catch(e) {
-                showToast("Error reading cache stream buffer data.", "danger");
+                showToast(`Session for ${serial} restored successfully!`, "success");
+            } catch (err) {
+                console.error(err);
+                showToast("Buffer parsing anomaly.", "danger");
             }
-        }
-
-        function clearInspectionFormScreen() {
-            document.getElementById('ins-serial').value = '';
-            document.getElementById('ins-inspector').value = '';
-            document.getElementById('ins-inspector-end').value = '';
-            document.getElementById('ins-production-line').value = '';
-            document.getElementById('ins-template-select').value = '';
-            document.getElementById('recovery-work-order').value = '';
-            
-            document.getElementById('dynamic-fields-container').innerHTML = '';
-            document.getElementById('dynamic-form-card').style.display = 'none';
-            
-            currentActivePhotos = {};
-            temporaryCapturedDataUrl = null;
-            activeFieldTargetId = null;
         }
 
         function saveCurrentInspection() {
             const serial = document.getElementById('ins-serial').value.trim();
             const templateId = document.getElementById('ins-template-select').value;
-            const inspectorStart = document.getElementById('ins-inspector').value;
-            const inspectorEnd = document.getElementById('ins-inspector-end').value;
-            const line = document.getElementById('ins-production-line').value;
+            const inspector = document.getElementById('ins-inspector').value;
 
-            if (!serial || !templateId) {
-                return showToast("No data to pack. Check Serial & Checklist.", "danger");
+            if (!serial || !templateId || !inspector) {
+                return showToast("Missing Master Metadata fields (Serial/Checklist/Inspector)!", "danger");
             }
 
             const template = localTemplatesCache.find(t => t.id === templateId);
-            if (!template) return showToast("Schema mismatch.", "danger");
-
-            showToast("Compiling assets locally on your device...", "info");
-
             const zip = new JSZip();
-            const rootFolderName = `${serial}_REPORT`;
-            const rootFolder = zip.folder(rootFolderName);
-            const photoFolder = rootFolder.folder("Photos");
+            
+            const report = {
+                workOrder: serial,
+                checklistName: template.name,
+                department: template.dept,
+                executingInspector: inspector,
+                closingInspector: document.getElementById('ins-inspector-end').value,
+                productionLine: document.getElementById('ins-production-line').value,
+                executionDate: new Date().toISOString(),
+                checkpoints: []
+            };
 
-            let reportText = `==================================================\n`;
-            reportText += `INSPECTFLOW PRO - QUALITY CONTROL REPORT\n`;
-            reportText += `==================================================\n`;
-            reportText += `Work Order / Serial: ${serial}\n`;
-            reportText += `Checklist Protocol:  ${template.name} (${template.dept})\n`;
-            reportText += `Production Area:     ${line || 'Not Specified'}\n`;
-            reportText += `Starting Inspector:  ${inspectorStart || 'Not Specified'}\n`;
-            reportText += `Closing Inspector:   ${inspectorEnd || 'Not Specified'}\n`;
-            reportText += `Export Timestamp:    ${new Date().toLocaleString()}\n`;
-            reportText += `Credits:             Developed by Andres Antonio\n`; 
-            reportText += `==================================================\n\n`;
-            reportText += `CHECKPOINT METRICS & OBSERVATIONS:\n`;
-            reportText += `--------------------------------------------------\n`;
-
-            template.fields.forEach((field, index) => {
-                const inputEl = document.getElementById(`comment_${field.id}`);
-                const observation = inputEl ? inputEl.value.trim() : "";
-                const photoMeta = currentActivePhotos[field.id];
+            template.fields.forEach(f => {
+                const commentValue = document.getElementById(`comment_${f.id}`) ? document.getElementById(`comment_${f.id}`).value : "";
+                const hasPhoto = !!currentActivePhotos[f.id];
                 
-                reportText += `${index + 1}. Q: ${field.question}\n`;
-                reportText += `   Spec: [${field.spec}]\n`;
-                reportText += `   Obs:  ${observation || "Passed"}\n`;
-                reportText += `   Photo: ${photoMeta ? photoMeta.filename : "None Attached"}\n`;
-                reportText += `--------------------------------------------------\n`;
+                report.checkpoints.push({
+                    checkpointId: f.id,
+                    question: f.question,
+                    specification: f.spec,
+                    observation: commentValue,
+                    photoLinked: hasPhoto ? currentActivePhotos[f.id].filename : "N/A"
+                });
 
-                if (photoMeta && photoMeta.dataUrl) {
-                    const base64Data = photoMeta.dataUrl.split(',')[1];
-                    photoFolder.file(photoMeta.filename, base64Data, { base64: true });
+                if (hasPhoto) {
+                    const rawDataUrl = currentActivePhotos[f.id].dataUrl;
+                    const base64Data = rawDataUrl.split(',')[1];
+                    zip.file(currentActivePhotos[f.id].filename, base64ToUint8Array(base64Data), { binary: true });
                 }
             });
 
-            rootFolder.file(`Summary_${serial}.txt`, reportText);
+            zip.file(`CRITICAL_DATA_LOG_${serial}.json`, JSON.stringify(report, null, 4));
 
-            zip.generateAsync({ type: "blob" })
-                .then(function(content) {
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(content);
-                    link.download = `${serial}_QA_Package.zip`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    showToast("📦 Pack ZIP saved locally to Downloads folder!", "success");
-                    clearInspectionFormScreen();
-                })
-                .catch(function(err) {
-                    console.error(err);
-                    showToast("Failed to compile ZIP archive.", "danger");
-                });
+            zip.generateAsync({ 
+                type: "blob",
+                compression: "DEFLATE",
+                compressionOptions: { level: 6 } 
+            }).then(function(content) {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `INSPECTFLOW_REPORT_${serial}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showToast("ZIP package successfully compiled and downloaded.", "success");
+            }).catch(err => {
+                console.error(err);
+                showToast("Error generating compressed package.", "danger");
+            });
+        }
+
+        function base64ToUint8Array(base64) {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes;
         }
     </script>
 </body>
