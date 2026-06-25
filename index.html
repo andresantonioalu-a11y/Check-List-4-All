@@ -24,14 +24,16 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: var(--background); color: var(--text); padding-bottom: 60px; }
+        body { background-color: var(--background); color: var(--text); padding-bottom: 80px; position: relative; min-height: 100vh; }
         header { background-color: var(--primary); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
         .logo-area h1 { font-size: 20px; font-weight: 600; }
         .logo-area span { font-size: 11px; color: #94a3b8; display: block; }
         
+        .header-right-zone { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
         .connection-status { font-size: 12px; padding: 4px 10px; border-radius: 12px; display: flex; align-items: center; gap: 6px; }
         .connection-status.local-secure { background-color: rgba(22, 163, 74, 0.2); color: #4ade80; }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; background-color: currentColor; }
+        .script-version-tag { font-size: 10px; font-family: monospace; color: #94a3b8; background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; }
 
         .role-nav { display: flex; background-color: var(--primary-light); padding: 0 10px; }
         .nav-btn { background: none; border: none; color: #cbd5e1; padding: 14px 24px; font-size: 14px; font-weight: 600; cursor: pointer; border-bottom: 4px solid transparent; }
@@ -91,6 +93,10 @@
         
         .checkpoint-entry-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; margin-bottom: 8px; align-items: center; }
         .master-completion-zone { margin-top: 25px; padding: 20px; border-top: 2px dashed var(--border); text-align: center; }
+
+        /* MARCA DE AGUA REQUERIDA (FOOTER FIXED) */
+        footer { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--primary); color: #94a3b8; text-align: center; padding: 8px 10px; font-size: 11px; border-top: 1px solid var(--primary-light); z-index: 1000; letter-spacing: 0.5px; }
+        footer strong { color: #f1f5f9; }
     </style>
 </head>
 <body>
@@ -100,9 +106,12 @@
             <h1>InspectFlow Pro</h1>
             <span>🔒 Local Sandbox (No Cloud Sync)</span>
         </div>
-        <div id="connection-indicator" class="connection-status local-secure">
-            <div class="status-dot"></div>
-            <span id="connection-text">Total Privacy Verification Active</span>
+        <div class="header-right-zone">
+            <div id="connection-indicator" class="connection-status local-secure">
+                <div class="status-dot"></div>
+                <span id="connection-text">Total Privacy Verification</span>
+            </div>
+            <div class="script-version-tag">Build: v1.1.0</div>
         </div>
     </header>
 
@@ -261,6 +270,10 @@
 
     <canvas id="hidden-bg-canvas" style="display:none;"></canvas>
     <div id="toast-container"></div>
+
+    <footer>
+        InspectFlow Pro Sandbox Application v1.1.0 — <strong>Developed by Andres Antonio</strong>
+    </footer>
 
     <script>
         let localTemplatesCache = [];
@@ -614,6 +627,23 @@
             }
         }
 
+        // FUNCIÓN DE LIMPIEZA TOTAL DE PANTALLA POST-INSPECCIÓN
+        function clearInspectionFormScreen() {
+            document.getElementById('ins-serial').value = '';
+            document.getElementById('ins-inspector').value = '';
+            document.getElementById('ins-inspector-end').value = '';
+            document.getElementById('ins-production-line').value = '';
+            document.getElementById('ins-template-select').value = '';
+            document.getElementById('recovery-work-order').value = '';
+            
+            document.getElementById('dynamic-fields-container').innerHTML = '';
+            document.getElementById('dynamic-form-card').style.display = 'none';
+            
+            currentActivePhotos = {};
+            temporaryCapturedDataUrl = null;
+            activeFieldTargetId = null;
+        }
+
         function saveCurrentInspection() {
             const serial = document.getElementById('ins-serial').value.trim();
             const templateId = document.getElementById('ins-template-select').value;
@@ -631,8 +661,6 @@
             showToast("Compiling assets locally on your device...", "info");
 
             const zip = new JSZip();
-            
-            // Nombre limpio de la carpeta raíz dentro del paquete
             const rootFolderName = `${serial}_REPORT`;
             const rootFolder = zip.folder(rootFolderName);
             const photoFolder = rootFolder.folder("Photos");
@@ -646,6 +674,7 @@
             reportText += `Starting Inspector:  ${inspectorStart || 'Not Specified'}\n`;
             reportText += `Closing Inspector:   ${inspectorEnd || 'Not Specified'}\n`;
             reportText += `Export Timestamp:    ${new Date().toLocaleString()}\n`;
+            reportText += `Credits:             Developed by Andres Antonio\n`; // Mención en reporte
             reportText += `==================================================\n\n`;
             reportText += `CHECKPOINT METRICS & OBSERVATIONS:\n`;
             reportText += `--------------------------------------------------\n`;
@@ -669,19 +698,19 @@
 
             rootFolder.file(`Summary_${serial}.txt`, reportText);
 
-            // Generar la descarga directa local
             zip.generateAsync({ type: "blob" })
                 .then(function(content) {
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(content);
-                    
-                    // Nombre estandarizado del archivo descargado en tu almacenamiento local
                     link.download = `${serial}_QA_Package.zip`;
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
                     
                     showToast("📦 Pack ZIP saved locally to Downloads folder!", "success");
+                    
+                    // EJECUTA LA LIMPIEZA DE PANTALLA INMEDIATAMENTE DESPUÉS DE GUARDAR
+                    clearInspectionFormScreen();
                 })
                 .catch(function(err) {
                     console.error(err);
