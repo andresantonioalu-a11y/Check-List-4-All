@@ -94,7 +94,6 @@
         .checkpoint-entry-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; margin-bottom: 8px; align-items: center; }
         .master-completion-zone { margin-top: 25px; padding: 20px; border-top: 2px dashed var(--border); text-align: center; }
 
-        /* MARCA DE AGUA REQUERIDA (FOOTER FIXED) */
         footer { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--primary); color: #94a3b8; text-align: center; padding: 8px 10px; font-size: 11px; border-top: 1px solid var(--primary-light); z-index: 1000; letter-spacing: 0.5px; }
         footer strong { color: #f1f5f9; }
     </style>
@@ -111,7 +110,7 @@
                 <div class="status-dot"></div>
                 <span id="connection-text">Total Privacy Verification</span>
             </div>
-            <div class="script-version-tag">Build: v1.1.0</div>
+            <div class="script-version-tag">Build: v1.1.1</div>
         </div>
     </header>
 
@@ -272,7 +271,7 @@
     <div id="toast-container"></div>
 
     <footer>
-        InspectFlow Pro Sandbox Application v1.1.0 — <strong>Developed by Andres Antonio</strong>
+        InspectFlow Pro Sandbox Application v1.1.1 — <strong>Developed by Andres Antonio</strong>
     </footer>
 
     <script>
@@ -523,7 +522,7 @@
             
             try {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                temporaryCapturedDataUrl = canvas.toDataURL('image/jpeg', 1.0);
+                temporaryCapturedDataUrl = canvas.toDataURL('image/jpeg', 0.85); // Optimizado a 0.85 para reducir carga en memoria móvil
                 video.pause(); 
             } catch (err) {
                 console.error(err);
@@ -539,6 +538,7 @@
             if (video) video.play();
         }
 
+        // REARQUITECTURA DE FLUJO SEGURO PARA ELIMINAR EL CONGELAMIENTO EN MÓVILES
         function acceptCurrentPhoto() {
             if (!temporaryCapturedDataUrl) return showToast("No snapshot payload found!", "danger");
             
@@ -557,28 +557,51 @@
             
             const fname = `${dateStr}_${timeStr}_${initials}_${serial}.jpg`;
             
+            // 1. Guardar la información en memoria de inmediato
             currentActivePhotos[activeFieldTargetId] = { filename: fname, dataUrl: temporaryCapturedDataUrl };
             
-            renderPhotoThumbnailInField(activeFieldTargetId, temporaryCapturedDataUrl, fname);
-            backupCurrentStateToLocalStorage();
-            
+            // 2. Cerrar el stream de hardware de inmediato para liberar RAM del teléfono
+            const targetFieldId = activeFieldTargetId; 
             closeHardwareStreaming();
+
+            // 3. Dejar un respiro de 150ms al procesador antes de pintar la miniatura y escribir el LocalStorage
+            setTimeout(() => {
+                renderPhotoThumbnailInField(targetFieldId, currentActivePhotos[targetFieldId].dataUrl, fname);
+                backupCurrentStateToLocalStorage();
+                showToast("Photo attached successfully.", "success");
+            }, 150);
         }
 
         function renderPhotoThumbnailInField(fieldId, src, name) {
-            document.getElementById(`cam_status_${fieldId}`).innerHTML = `<span class="photo-filename-label">🟢 Linked: ${name}</span>`;
-            document.getElementById(`img_preview_${fieldId}`).src = src;
-            document.getElementById(`preview_container_${fieldId}`).style.display = 'block';
+            const statusIndicator = document.getElementById(`cam_status_${fieldId}`);
+            if (statusIndicator) {
+                statusIndicator.innerHTML = `<span class="photo-filename-label">🟢 Linked: ${name}</span>`;
+            }
+            const imgPreview = document.getElementById(`img_preview_${fieldId}`);
+            if (imgPreview) {
+                imgPreview.src = src;
+            }
+            const previewContainer = document.getElementById(`preview_container_${fieldId}`);
+            if (previewContainer) {
+                previewContainer.style.display = 'block';
+            }
         }
 
         function closeHardwareStreaming() {
             document.getElementById('hardware-viewfinder-modal').style.display = 'none';
             if (globalCameraStream) {
-                try { globalCameraStream.getTracks().forEach(track => track.stop()); } catch(e) {}
+                try { 
+                    globalCameraStream.getTracks().forEach(track => {
+                        track.stop();
+                    }); 
+                } catch(e) { console.error(e); }
                 globalCameraStream = null;
             }
             const video = document.getElementById('active-lens-video');
-            if (video) { video.pause(); video.srcObject = null; }
+            if (video) { 
+                video.pause(); 
+                video.srcObject = null; 
+            }
             temporaryCapturedDataUrl = null;
         }
 
@@ -627,7 +650,6 @@
             }
         }
 
-        // FUNCIÓN DE LIMPIEZA TOTAL DE PANTALLA POST-INSPECCIÓN
         function clearInspectionFormScreen() {
             document.getElementById('ins-serial').value = '';
             document.getElementById('ins-inspector').value = '';
@@ -674,7 +696,7 @@
             reportText += `Starting Inspector:  ${inspectorStart || 'Not Specified'}\n`;
             reportText += `Closing Inspector:   ${inspectorEnd || 'Not Specified'}\n`;
             reportText += `Export Timestamp:    ${new Date().toLocaleString()}\n`;
-            reportText += `Credits:             Developed by Andres Antonio\n`; // Mención en reporte
+            reportText += `Credits:             Developed by Andres Antonio\n`; 
             reportText += `==================================================\n\n`;
             reportText += `CHECKPOINT METRICS & OBSERVATIONS:\n`;
             reportText += `--------------------------------------------------\n`;
@@ -708,8 +730,6 @@
                     document.body.removeChild(link);
                     
                     showToast("📦 Pack ZIP saved locally to Downloads folder!", "success");
-                    
-                    // EJECUTA LA LIMPIEZA DE PANTALLA INMEDIATAMENTE DESPUÉS DE GUARDAR
                     clearInspectionFormScreen();
                 })
                 .catch(function(err) {
